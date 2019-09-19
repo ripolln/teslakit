@@ -2,6 +2,8 @@
 
 Teslakit is a Python3 library for statistical calculations and methodologies for handling global climate data.
 
+				  	**Currently on development**
+
 ## Main contents
 
 
@@ -65,6 +67,15 @@ cond activate teslakit
 # to check that the environment is installed
 conda env list
 ```
+
+### Installing optional modules
+
+Basemap module is used in some Teslakit figures.
+
+It is not needed to run any calculation and installing it is optional
+
+Follow Basemap installation instructions at https://github.com/matplotlib/basemap
+
 
 ## Handling a Teslakit Project 
 - - -
