@@ -10,6 +10,7 @@ import pickle
 
 from prettytable import PrettyTable
 import xarray as xr
+import numpy as np
 
 from .io.getinfo import description
 from .io.aux_nc import StoreBugXdset
@@ -271,8 +272,13 @@ class Database(object):
         return ReadEstelaMat(self.paths.site.ESTELA.estelamat)
 
     def Load_ESTELA_waves(self):
-        return ReadGowMat(self.paths.site.ESTELA.gowpoint)
-
+        f_r = self.paths.site.ESTELA.wave_point
+        
+        if f_r.endswith('.mat'):
+            return ReadGowMat(self.paths.site.ESTELA.wave_point)
+        elif f_r.endswith('.npz'):
+            return np.load(self.paths.site.ESTELA.wave_point)
+        
     def Load_ESTELA_SLP(self):
         return xr.open_dataset(self.paths.site.ESTELA.slp)
 
