@@ -17,6 +17,7 @@ import matplotlib.dates as mdates
 # teslakit
 from .custom_colors import colors_awt
 from ..util.operations import GetDivisors
+from ..util.operations import GetBestRowsCols
 
 # import constants
 from .config import _faspect, _fsize, _fdpi
@@ -202,6 +203,8 @@ def Plot_AWT_Validation_Cluster(AWT_2D, AWT_num_wts, AWT_ID, AWT_dates,
                                 AWT_bmus, AWT_PCs_fit, AWT_PCs_rnd, AWT_color,
                                 p_export=None):
 
+    from mpl_toolkits.mplot3d import Axes3D
+
     # figure
     fig = plt.figure(figsize=(_faspect*_fsize, _fsize))
 
@@ -292,7 +295,7 @@ def Plot_AWT_Validation(xds_AWT, lon, d_PCs_fit, d_PCs_rnd, p_export=None):
 
 def Plot_AWTs(xds_AWT, lon, p_export=None):
     '''
-    Plot Annual Weather types
+    Plot Annual Weather Types
     '''
 
     bmus = xds_AWT.bmus.values[:]
@@ -300,19 +303,8 @@ def Plot_AWTs(xds_AWT, lon, p_export=None):
     Km = xds_AWT.Km.values[:]
     n_clusters = len(xds_AWT.n_clusters.values[:])
 
-    ## Get number of rows and cols for gridplot 
-    #sqrt_clusters = sqrt(n_clusters)
-    #if sqrt_clusters.is_integer():
-    #    n_rows = int(sqrt_clusters)
-    #    n_cols = int(sqrt_clusters)
-    #else:
-    #    l_div = GetDivisors(n_clusters)
-    #    n_rows = l_div[len(l_div)//2]
-    #    n_cols = n_clusters//n_rows
-
-    # TODO 6 AWTs
-    n_rows = 2
-    n_cols = 3
+    # get number of rows and cols for gridplot 
+    n_cols, n_rows = GetBestRowsCols(n_clusters)
 
     # get cluster colors
     cs_awt = colors_awt()
@@ -400,6 +392,8 @@ def Plot_AWT_PCs_3D(d_PCs_fit, d_PCs_rnd, p_export=None):
     Plot Annual Weather Types PCs fit - rnd comparison (3D)
     '''
 
+    from mpl_toolkits.mplot3d import Axes3D
+
     # get cluster colors
     cs_awt = colors_awt()
 
@@ -462,18 +456,21 @@ def Plot_EOFs_SST(xds_PCA, n_plot, p_export=None):
 
     for it in range(n_plot):
 
-        # plot figure
-        fig = plt.figure(figsize=(_faspect*_fsize, _fsize))
-        # layout
-        gs = gridspec.GridSpec(4, 4, wspace=0.10, hspace=0.2)
-        ax_EOF = plt.subplot(gs[:3, :])
-        ax_evol = plt.subplot(gs[3, :])
-
         # map of the spatial field
         spatial_fields = EOFs[:,it]*np.sqrt(variance[it])
 
         # reshape from vector to matrix with separated months
-        C = np.reshape(spatial_fields[:len_x*12], (12, len_x)).transpose()
+        C = np.reshape(
+            spatial_fields[:len_x*12], (12, len_x)
+        ).transpose()
+
+        # plot figure
+        fig = plt.figure(figsize=(_faspect*_fsize, _fsize))
+
+        # layout
+        gs = gridspec.GridSpec(4, 4, wspace=0.10, hspace=0.2)
+        ax_EOF = plt.subplot(gs[:3, :])
+        ax_evol = plt.subplot(gs[3, :])
 
         # EOF pcolormesh
         ttl = 'EOF #{0}  ---  {1:.2f}%'.format(it+1, n_percent[it]*100)

@@ -16,8 +16,8 @@ from .pca import CalcPCA_EstelaPred
 from .kma import KMA_regression_guided
 from .kma import SimpleMultivariateRegressionModel as SMRM
 from .intradaily import Calculate_Hydrographs
-from .plotting.eofs import Plot_EOFs_EstelaPred
-from .plotting.kma import Plot_KMArg_clusters_datamean
+from .plotting.estela import Plot_EOFs_EstelaPred, Plot_DWTs_Mean, \
+Plot_DWTs_Probs, Plot_DWT_PCs_3D
 
 
 def spatial_gradient(xdset, var_name):
@@ -221,7 +221,7 @@ class Predictor(object):
         self.Save()
 
     def Calc_KMA_regressionguided(
-        self, num_clusters, xds_waves, waves_vars, alpha):
+        self, num_clusters, xds_waves, waves_vars, alpha, min_group_size=None):
         'KMA regression guided with waves data'
 
         # we have to miss some days of data due to ESTELA
@@ -234,7 +234,9 @@ class Predictor(object):
         # classification: KMA regresion guided
         repres = 0.95
         self.KMA = KMA_regression_guided(
-            self.PCA, xds_Yregres, num_clusters, repres, alpha)
+            self.PCA, xds_Yregres,
+            num_clusters, repres, alpha, min_group_size
+        )
 
         # store time array with KMA
         self.KMA['time'] = (('n_components',), self.PCA.pred_time.values[:])
@@ -283,7 +285,7 @@ class Predictor(object):
         if op.isfile(self.p_kma): os.remove(self.p_kma)
         self.KMA.to_netcdf(self.p_kma,'w')
 
-    def Plot_EOFs_EstelaPred(self, n_plot, show=False):
+    def Plot_EOFs_EstelaPred(self, n_plot=3, show=True):
         'Plot EOFs generated in PCA_EstelaPred'
 
         if show:
@@ -293,24 +295,87 @@ class Predictor(object):
 
         Plot_EOFs_EstelaPred(self.PCA, n_plot, p_export)
 
-    def Plot_KMArg_clusters_datamean(self, var_name, show=False, mask_name=None):
+    def Plot_DWTs(self, var_name, show=True, mask=None):
         '''
-        Plot KMA clusters generated in PCA_EstelaPred
+        Plot KMA clusters generated in PCA_EstelaPred (DWTs)
+
         uses database means at cluster location (bmus corrected)
         '''
+
+        # data to plot
+        xds_DWTs = self.KMA
+        var_data = self.data[var_name]
+
+        # data mask
+        if mask:
+            var_data = var_data.where(self.data[mask]==1)
 
         if show:
             p_export = None
         else:
             p_export = op.join(
                 self.p_store,
-                'KMA_RG_clusters_datamean_{0}.png'.format(var_name))
+                'KMA_RG_DWTs_mean_{0}.png'.format(var_name))
 
-        bmus = self.KMA['sorted_bmus'].values
-        var_data = self.data[var_name]
+        # Plot DWTs mean using var_data
+        Plot_DWTs_Mean(xds_DWTs, var_data, p_export)
 
-        if mask_name:
-            var_data = var_data.where(self.data[mask_name]==1)
+    def Plot_DWTs_Probs(self, show=True):
+        '''
+        Plot DWTs bmus probabilities
+            - histogram for ocurrences
+            - probs. all series
+            - probs by month
+            - probs by 3month
+        '''
 
-        Plot_KMArg_clusters_datamean(var_data, bmus, p_export)
+        # handle export path
+        if show:
+            p_export = None
+        else:
+            p_export = op.join(
+                self.p_store,
+                'KMA_RG_DWTs_Probs.png'
+            )
 
+        # Plot DWTs mean using var_data
+        bmus = self.KMA['sorted_bmus'].values[:] + 1 # index to DWT id
+        bmus_time = self.KMA['time'].values[:]
+        n_clusters = len(self.KMA.n_clusters.values[:])
+
+        Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export)
+
+    def Plot_PCs_3D(self, show=True):
+        'Plots Predictor first 3 PCs'
+
+        # first 3 PCs
+        bmus = self.KMA['sorted_bmus'].values[:]
+        PCs = self.PCA.PCs.values[:]
+        variance = self.PCA.variance.values[:]
+
+        n_clusters = len(self.KMA.n_clusters.values[:])
+
+        PC1 = np.divide(PCs[:,0], np.sqrt(variance[0]))
+        PC2 = np.divide(PCs[:,1], np.sqrt(variance[1]))
+        PC3 = np.divide(PCs[:,2], np.sqrt(variance[2]))
+
+        # dictionary of DWT PCs 123 
+        d_PCs = {}
+        for ic in range(n_clusters):
+            ind = np.where(bmus == ic)[:]
+
+            PC123 = np.column_stack((PC1[ind], PC2[ind], PC3[ind]))
+
+            d_PCs['{0}'.format(ic+1)] = PC123
+
+        # handle export path
+        if show:
+            p_export = None
+        else:
+            p_export = op.join(
+                self.p_store,
+                'KMA_RG_PCs123_3D.png'
+            )
+
+        # Plot DWTs PCs 3D 
+        Plot_DWT_PCs_3D(d_PCs, n_clusters, p_export)
