@@ -257,13 +257,13 @@ def Plot_Historical_TCs_Tracks(xds_TCs_r1, xds_TCs_r2,
         if s==0:
             ax.plot(
                 lon, xds_TCs_r1.isel(storm = s).lat_wmo.values[:],
-                '-', color = 'grey', alpha = 0.5,
+                '-', color = 'grey', alpha = 0.5,zorder=2,
                 label = 'Enter {0}° radius'.format(r1)
             )
         else:
             ax.plot(
                 lon, xds_TCs_r1.isel(storm = s).lat_wmo.values[:],
-                '-', color = 'grey',alpha = 0.5
+                '-', color = 'grey',alpha = 0.5,zorder=2,
             )
             ax.plot(
                 lon[0], xds_TCs_r1.isel(storm = s).lat_wmo.values[0],
@@ -277,13 +277,13 @@ def Plot_Historical_TCs_Tracks(xds_TCs_r1, xds_TCs_r2,
         if s==0:
             ax.plot(
                 lon, xds_TCs_r2.isel(storm = s).lat_wmo.values[:],
-                color = 'indianred', alpha = 0.8,
+                color = 'indianred', alpha = 0.8,zorder=2,
                 label = 'Enter {0}° radius'.format(r2)
             )
         else:
             ax.plot(
                 lon, xds_TCs_r2.isel(storm = s).lat_wmo.values[:],
-                color = 'indianred', alpha = 0.8
+                color = 'indianred', alpha = 0.8,zorder=2,
             )
             ax.plot(
                 lon[0], xds_TCs_r2.isel(storm = s).lat_wmo.values[0],
@@ -301,7 +301,7 @@ def Plot_Historical_TCs_Tracks(xds_TCs_r1, xds_TCs_r2,
     circle = Circle(
         m(pnt_lon, pnt_lat), r1,
         facecolor = 'grey', edgecolor = 'grey',
-        linewidth = 3, alpha = 0.5,
+        linewidth = 3, alpha = 0.5, zorder=1,
         label='{0}° Radius'.format(r1)
     )
     ax.add_patch(circle)
@@ -310,7 +310,7 @@ def Plot_Historical_TCs_Tracks(xds_TCs_r1, xds_TCs_r2,
     circle2 = Circle(
         m(pnt_lon, pnt_lat), r2,
         facecolor = 'indianred', edgecolor = 'indianred',
-        linewidth = 3, alpha = 0.8,
+        linewidth = 3, alpha = 0.8, zorder=1,
         label='{0}° Radius'.format(r2))
     ax.add_patch(circle2)
 
@@ -395,7 +395,7 @@ def Plot_Historical_TCs_Tracks_Category(xds_TCs_r1, cat,
     # customize axes
     ax.set_aspect(1.0)
     ax.set_ylim(lat1,lat2)
-    ax.set_title('Historical TCs - MAJURO', fontsize=15)
+    ax.set_title('Historical TCs entering 14º radius - GUAM', fontsize=15)
     ax.legend(loc=0, fontsize=14)
     axlegend_categ(ax)
 

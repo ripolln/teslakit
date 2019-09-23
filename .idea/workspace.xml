@@ -2,13 +2,34 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="81db804e-e9d6-4c80-a543-ceb767957c70" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/scripts/plot_TG_Guam.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/00_Set_Database.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/00_Set_Database.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/01_SST_AnnualWeatherTypes.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/01_SST_AnnualWeatherTypes.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/02_MJO_ALR_Simulation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/02_MJO_ALR_Simulation.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/03_STORMS_Historical_ExtractRadius.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/03_STORMS_Historical_ExtractRadius.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/04_STORMS_Historical_CopulaSimulation_MDA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/04_STORMS_Historical_CopulaSimulation_MDA.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/05_STORMS_Historical_RBFs_Interpolation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/05_STORMS_Historical_RBFs_Interpolation.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/07_WAVES_CalculateFamilies_RemoveTCs.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/07_WAVES_CalculateFamilies_RemoveTCs.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/08_SLP_ESTELA_PCA_KMArg.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/00_Set_Database.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/01_SST_AnnualWeatherTypes.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/02_MJO_ALR_Simulation.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/03_STORMS_Historical_ExtractRadius.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/04_STORMS_Historical_CopulaSimulation_MDA.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/05_STORMS_Historical_RBFs_Interpolation.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/07_WAVES_CalculateFamilies_RemoveTCs.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/09_SLP_ESTELA_ALR_Covariates.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/10_Climate_Emulator.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/TIDES_Astronomical_Simulation.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM_viejos/TIDES_MMSL_Regression.ipynb" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/08_SLP_ESTELA_PCA_KMArg.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/teslakit/plotting/storms.py" beforeDir="false" afterPath="$PROJECT_DIR$/teslakit/plotting/storms.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -19,10 +40,13 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/teslakit/io/matlab.py">
+        <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="46">
-              <caret line="47" lean-forward="true" selection-start-line="47" selection-end-line="47" />
+            <state relative-caret-position="-359">
+              <caret line="49" column="11" lean-forward="true" selection-start-line="49" selection-start-column="11" selection-end-line="85" />
+              <folding>
+                <element signature="e#1#15#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -45,6 +69,12 @@
       <find>dataset</find>
       <find>ReadGowMat</find>
       <find>estela</find>
+      <find>DateConverter_Mat2Py</find>
+      <find>datematlab2datetime</find>
+      <find>dr</find>
+      <find>res</find>
+      <find>resa</find>
+      <find>resam</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -57,10 +87,13 @@
         <option value="$PROJECT_DIR$/scripts/plot_GOW_CSIRO.py" />
         <option value="$PROJECT_DIR$/teslakit/database.py" />
         <option value="$PROJECT_DIR$/teslakit/io/matlab.py" />
+        <option value="$PROJECT_DIR$/teslakit/plotting/storms.py" />
+        <option value="$PROJECT_DIR$/scripts/plot_TG_Guam.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="39" />
     <option name="y" value="23" />
     <option name="width" value="1280" />
     <option name="height" value="777" />
@@ -93,12 +126,6 @@
               <item name="teslakit" type="462c0819:PsiDirectoryNode" />
               <item name="teslakit" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="teslakit" type="b2602c69:ProjectViewProjectNode" />
-              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
-              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
-              <item name="io" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
@@ -121,7 +148,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.plot_GOW_CSIRO">
+  <component name="RunManager" selected="Python.plot_TG_Guam">
     <configuration name="plot_GOW_CSIRO" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="teslakit" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -135,6 +162,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/plot_GOW_CSIRO.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plot_TG_Guam" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="teslakit" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/plot_TG_Guam.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -166,6 +214,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.plot_TG_Guam" />
         <item itemvalue="Python.plot_GOW_CSIRO" />
         <item itemvalue="Python.plot_grids_new" />
       </list>
@@ -178,7 +227,7 @@
     <frame x="0" y="23" width="1280" height="777" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2494043" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2494043" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -261,6 +310,61 @@
         <state relative-caret-position="-4860" />
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/tides.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="15" column="54" lean-forward="true" selection-start-line="15" selection-start-column="54" selection-end-line="15" selection-end-column="54" />
+          <folding>
+            <element signature="e#47#56#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/storms.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1585">
+          <caret line="398" column="17" selection-start-line="398" selection-start-column="14" selection-end-line="398" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/io/matlab.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2550">
+          <caret line="51" column="31" selection-start-line="51" selection-start-column="11" selection-end-line="51" selection-end-column="31" />
+          <folding>
+            <element signature="e#56#65#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/custom_dateutils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="36" column="60" selection-start-line="36" selection-start-column="12" selection-end-line="36" selection-end-column="60" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../analogos/source/analogos_NZ_preproc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="98">
+          <caret line="51" selection-start-line="51" selection-end-line="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../analogos/source/analogos_NZ_postproc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="224">
+          <caret line="41" selection-start-line="41" selection-end-line="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../analogos/source/analogos.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="33" column="9" selection-start-line="33" selection-start-column="9" selection-end-line="34" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/teslakit/database.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="363">
@@ -268,10 +372,41 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teslakit/io/matlab.py">
+    <entry file="file://$PROJECT_DIR$/../waves_nz/source/c_averages_hindcast_GCM.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="46">
-          <caret line="47" lean-forward="true" selection-start-line="47" selection-end-line="47" />
+        <state relative-caret-position="134">
+          <caret line="201" column="23" selection-start-line="201" selection-start-column="23" selection-end-line="201" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../waves_nz/source/b_reformat_GCM_usgs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="12" column="6" selection-start-line="12" selection-start-column="6" selection-end-line="12" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../waves_nz/source/a_reformat_Joao_Hindcast.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="183" column="26" selection-start-line="183" selection-start-column="22" selection-end-line="183" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../analogos/source/preprocess.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="239" column="70" selection-start-line="239" selection-start-column="70" selection-end-line="239" selection-end-column="70" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-359">
+          <caret line="49" column="11" lean-forward="true" selection-start-line="49" selection-start-column="11" selection-end-line="85" />
+          <folding>
+            <element signature="e#1#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
