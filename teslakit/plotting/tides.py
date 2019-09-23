@@ -143,7 +143,7 @@ def Plot_Tide_MMSL(
         plt.close()
 
 def Plot_Validate_MMSL_tseries(
-    mmsl_time, mmsl_data, mmsl_pred, p_export=None):
+    mmsl_time, mmsl_data, mmsl_pred, name_title, p_export=None):
     'Plots series comparison between mmsl data and mmsl predicted with nlm'
 
     # plot figure
@@ -159,7 +159,7 @@ def Plot_Validate_MMSL_tseries(
     )
     axs.legend()
     plt.xlim(mmsl_time[0], mmsl_time[-1])
-    plt.title('Monthly Mean Sea Level non-linear model')
+    plt.title([name_title, '- Monthly Mean Sea Level'])
     plt.xlabel('time')
     plt.ylabel('Monthly Mean Sea Level (mm)')
 
@@ -170,7 +170,7 @@ def Plot_Validate_MMSL_tseries(
         fig.savefig(p_export, dpi=128)
         plt.close()
 
-def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, p_export=None):
+def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, name_title, p_export=None):
     'Plots scatter comparison between mmsl data and mmsl predicted with nlm'
 
     # plot figure
@@ -185,9 +185,9 @@ def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, p_export=None):
     dmax = np.max(mmsl_data)
     plt.plot([dmin, dmax], [dmin, dmax], '--k')
 
-    plt.title('Monthly Mean Sea Level non-linear model')
+    plt.title([name_title, '- Monthly Mean Sea Level'])
     plt.xlabel('Tide Gauge (mm)')
-    plt.ylabel('Simulated (m)')
+    plt.ylabel('Modeled (mm)')
 
     # show / export
     if not p_export:
