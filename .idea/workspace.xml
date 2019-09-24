@@ -5,14 +5,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/00_Set_Database.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/00_Set_Database.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/01_SST_AnnualWeatherTypes.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/01_SST_AnnualWeatherTypes.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/02_MJO_ALR_Simulation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/02_MJO_ALR_Simulation.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/03_STORMS_Historical_ExtractRadius.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/03_STORMS_Historical_ExtractRadius.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/04_STORMS_Historical_CopulaSimulation_MDA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/04_STORMS_Historical_CopulaSimulation_MDA.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/05_STORMS_Historical_RBFs_Interpolation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/05_STORMS_Historical_RBFs_Interpolation.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/07_WAVES_CalculateFamilies_RemoveTCs.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/07_WAVES_CalculateFamilies_RemoveTCs.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/08_SLP_ESTELA_PCA_KMArg.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/01_SST_AnnualWeatherTypes.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/01_SST_AnnualWeatherTypes.ipynb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -25,7 +18,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="18">
+            <state relative-caret-position="756">
               <caret line="49" column="11" selection-start-line="49" selection-start-column="11" selection-end-line="85" />
               <folding>
                 <element signature="e#1#15#0" expanded="true" />
@@ -34,14 +27,20 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="183">
-              <caret line="35" column="10" selection-start-line="35" selection-start-column="10" selection-end-line="35" selection-end-column="10" />
-              <folding>
-                <element signature="e#48#57#0" expanded="true" />
-              </folding>
+              <caret line="36" column="10" selection-start-line="36" selection-start-column="10" selection-end-line="36" selection-end-column="10" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/teslakit/plotting/awt.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="232">
+              <caret line="471" column="31" selection-start-line="471" selection-start-column="31" selection-end-line="471" selection-end-column="31" />
             </state>
           </provider>
         </entry>
@@ -71,6 +70,7 @@
       <find>resa</find>
       <find>resam</find>
       <find>title</find>
+      <find>AWT_PC</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -88,9 +88,8 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="1281" />
-    <option name="y" value="-413" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="y" value="23" />
     <option name="width" value="1280" />
     <option name="height" value="777" />
   </component>
@@ -99,7 +98,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -132,6 +130,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -226,7 +225,7 @@
     <configuration />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1281" y="-413" width="1280" height="777" extended-state="0" />
+    <frame x="0" y="23" width="1280" height="777" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2494043" />
@@ -395,7 +394,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
+        <state relative-caret-position="756">
           <caret line="49" column="11" selection-start-line="49" selection-start-column="11" selection-end-line="85" />
           <folding>
             <element signature="e#1#15#0" expanded="true" />
@@ -406,10 +405,14 @@
     <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="183">
-          <caret line="35" column="10" selection-start-line="35" selection-start-column="10" selection-end-line="35" selection-end-column="10" />
-          <folding>
-            <element signature="e#48#57#0" expanded="true" />
-          </folding>
+          <caret line="36" column="10" selection-start-line="36" selection-start-column="10" selection-end-line="36" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/awt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="232">
+          <caret line="471" column="31" selection-start-line="471" selection-start-column="31" selection-end-line="471" selection-end-column="31" />
         </state>
       </provider>
     </entry>
