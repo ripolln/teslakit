@@ -135,6 +135,9 @@ class Database(object):
         with open(self.paths.site.SST.d_pcs_rnd, 'wb') as f:
             pickle.dump(d_PCs_rnd, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+    def Save_SST_AWT_sim(self, xds):
+        StoreBugXdset(xds, self.paths.site.SST.awt_sim)
+
     def Save_SST_PCs_sim(self, xds):
 
         # store yearly data
@@ -163,6 +166,9 @@ class Database(object):
             d_PCs_rnd = pickle.load(f)
 
         return d_PCs_fit, d_PCs_rnd
+
+    def Load_SST_AWT_sim(self):
+        return xr.open_dataset(self.paths.site.SST.awt_sim)
 
     def Load_SST_PCs_sim_d(self):
         return xr.open_dataset(self.paths.site.SST.pcs_sim_d)
@@ -238,6 +244,9 @@ class Database(object):
     def Load_WAVES_partitions(self):
         return ReadGowMat(self.paths.site.WAVES.partitions_p1)
 
+    def Load_WAVES_partitions_nc(self):
+        return xr.open_dataset(self.paths.site.WAVES.partitions_p1)
+
     def Load_WAVES_fams_noTCs(self):
         return xr.open_dataset(self.paths.site.WAVES.families_notcs)
 
@@ -272,7 +281,14 @@ class Database(object):
 
     def Load_ESTELA_waves(self):
         return ReadGowMat(self.paths.site.ESTELA.gowpoint)
-
+    
+    def Load_ESTELA_waves_np(self):
+        import numpy as np
+        npzfile=np.load(self.paths.site.ESTELA.gowpoint)
+        xr1=xr.Dataset({'Hs':(['time'],npzfile['Hs']), 'Tp':(['time'],npzfile['Tp']),'Tm':(['time'],npzfile['Tm02']),'Dir':(['time'],npzfile['Dir']),
+                        'dspr':(['time'],npzfile['dspr'])},coords={'time':npzfile['time']})
+        return  xr1
+    
     def Load_ESTELA_SLP(self):
         return xr.open_dataset(self.paths.site.ESTELA.slp)
 
@@ -324,6 +340,40 @@ class Database(object):
         xds.rename({'WaterLevel':'tide'}, inplace=True)
         xds['tide'] = xds['tide'] * 1000
         return xds
+
+    def Load_AWTs_DWTs_Plots(self, n_sim=0):
+        'Load data needed for Plots_AWTs_DWTs_Probs'
+
+        # historical
+        xds_AWT_hist = self.Load_SST_KMA()
+        xds_DWT_hist = self.Load_ESTELA_KMA()
+
+        # simulation 
+        xds_AWT_sim = self.Load_SST_AWT_sim()
+        xds_DWT_sim = self.Load_ESTELA_DWT_sim()
+
+        # AWT historical - bmus_corrected 
+        xds_AWT_hist = xr.Dataset(
+            {'bmus': (('time',), xds_AWT_hist.bmus_corrected.values[:])},
+            coords = {'time': xds_AWT_hist.time.values[:]}
+        )
+        # DWT historical - sorted_bmus
+        xds_DWT_hist = xr.Dataset(
+            {'bmus': (('time',), xds_DWT_hist.sorted_bmus.values[:])},
+            coords = {'time': xds_DWT_hist.time.values[:]}
+        )
+        # AWT simulated - evbmus_sims -1 
+        xds_AWT_sim = xr.Dataset(
+            {'bmus': (('time',), xds_AWT_sim.evbmus_sims.isel(n_sim=n_sim)-1)},
+            coords = {'time': xds_AWT_sim.time.values[:]}
+        )
+        # DWT  simulated - evbmus_sims
+        xds_DWT_sim = xr.Dataset(
+            {'bmus': (('time',), xds_DWT_sim.evbmus_sims.isel(n_sim=n_sim))},
+            coords = {'time': xds_DWT_sim.time.values[:]}
+        )
+
+        return xds_AWT_hist, xds_DWT_hist, xds_AWT_sim, xds_DWT_sim
 
 
 class PathControl(object):
