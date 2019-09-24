@@ -70,7 +70,7 @@ def Waves_Distributions_HsTpDir(xds_wvs_pts):
     for ic in clusters:
         # data mean
         pos_cluster = np.where(xds_wvs_pts.bmus==ic)[0][:]
-        ax = plt.subplot(gs[grid_row, grid_col])
+        ax = plt.subplot(gs[grid_row, grid_col], projection='polar')     #obtener gráfica polar
         plt.hist(xds_wvs_pts.sea_Dir[pos_cluster],range=[0,360],bins=50,color='gold',histtype='stepfilled', alpha=0.5)
         plt.hist(xds_wvs_pts.swell_1_Dir[pos_cluster],range=[0,360],bins=50,color='darkgreen',histtype='stepfilled', alpha=0.5)
         plt.hist(xds_wvs_pts.swell_2_Dir[pos_cluster],range=[0,360],bins=50,color='royalblue',histtype='stepfilled', alpha=0.5)
