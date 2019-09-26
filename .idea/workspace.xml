@@ -2,10 +2,20 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="81db804e-e9d6-4c80-a543-ceb767957c70" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/scripts/extract_SLP_CFSR.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/00_Set_Database.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/00_Set_Database.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/01_SST_AnnualWeatherTypes.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/01_SST_AnnualWeatherTypes.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/01_SST_AnnualWeatherTypes.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/01_SST_AnnualWeatherTypes.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/02_MJO_ALR_Simulation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/02_MJO_ALR_Simulation.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/03_STORMS_Historical_ExtractRadius.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/03_STORMS_Historical_ExtractRadius.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/06_STORMS_Synthetic_CategoryChangeProbs.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/08_SLP_ESTELA_PCA_KMArg.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/10_Climate_Emulator.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/TIDES_Astronomical_Simulation.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/TIDES_MMSL_Regression.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/08_SLP_ESTELA_PCA_KMArg.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/TG_Guam.png" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/TG_Guam.png" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,11 +25,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="756">
-              <caret line="49" column="11" selection-start-line="49" selection-start-column="11" selection-end-line="85" />
+            <state relative-caret-position="322">
+              <caret line="81" column="41" lean-forward="true" selection-start-line="81" selection-end-line="82" />
               <folding>
                 <element signature="e#1#15#0" expanded="true" />
               </folding>
@@ -28,19 +38,10 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
+        <entry file="file://$PROJECT_DIR$/scripts/extract_SLP_CFSR.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="183">
-              <caret line="36" column="10" selection-start-line="36" selection-start-column="10" selection-end-line="36" selection-end-column="10" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/teslakit/plotting/awt.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="232">
-              <caret line="471" column="31" selection-start-line="471" selection-start-column="31" selection-end-line="471" selection-end-column="31" />
+            <state relative-caret-position="198">
+              <caret line="11" lean-forward="true" selection-start-line="11" selection-end-line="11" />
             </state>
           </provider>
         </entry>
@@ -71,6 +72,7 @@
       <find>resam</find>
       <find>title</find>
       <find>AWT_PC</find>
+      <find>resample</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -84,20 +86,24 @@
         <option value="$PROJECT_DIR$/teslakit/database.py" />
         <option value="$PROJECT_DIR$/teslakit/io/matlab.py" />
         <option value="$PROJECT_DIR$/teslakit/plotting/storms.py" />
+        <option value="$PROJECT_DIR$/teslakit/io/cfs.py" />
+        <option value="$PROJECT_DIR$/scripts/extract_SLP_CFSR.py" />
         <option value="$PROJECT_DIR$/scripts/plot_TG_Guam.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="y" value="23" />
-    <option name="width" value="1280" />
-    <option name="height" value="777" />
+    <option name="x" value="1280" />
+    <option name="y" value="-550" />
+    <option name="width" value="1920" />
+    <option name="height" value="1177" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -118,19 +124,13 @@
             <path>
               <item name="teslakit" type="b2602c69:ProjectViewProjectNode" />
               <item name="teslakit" type="462c0819:PsiDirectoryNode" />
-              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="teslakit" type="b2602c69:ProjectViewProjectNode" />
-              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
-              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
-              <item name="plotting" type="462c0819:PsiDirectoryNode" />
+              <item name="scripts" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Course" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -149,7 +149,49 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.plot_TG_Guam">
+  <component name="RunManager" selected="Python.extract_SLP_CFSR">
+    <configuration name="cfs" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="teslakit" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/teslakit/io" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/teslakit/io/cfs.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="extract_SLP_CFSR" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="teslakit" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/extract_SLP_CFSR.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="plot_GOW_CSIRO" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="teslakit" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -215,6 +257,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.extract_SLP_CFSR" />
+        <item itemvalue="Python.cfs" />
         <item itemvalue="Python.plot_TG_Guam" />
         <item itemvalue="Python.plot_GOW_CSIRO" />
         <item itemvalue="Python.plot_grids_new" />
@@ -225,22 +269,22 @@
     <configuration />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1280" height="777" extended-state="6" />
+    <frame x="1280" y="-550" width="1920" height="1177" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2494043" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.16535018" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.32959327" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.32884097" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.32959327" />
       <window_info anchor="bottom" id="Educational.CheckDetails" order="8" />
-      <window_info anchor="bottom" id="Terminal" order="9" weight="0.32959327" />
-      <window_info anchor="bottom" id="Python Console" order="10" weight="0.32959327" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="9" visible="true" weight="0.32884097" />
+      <window_info anchor="bottom" id="Python Console" order="10" weight="0.32884097" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -295,11 +339,6 @@
         <state relative-caret-position="379">
           <caret line="34" column="24" selection-start-line="34" selection-start-column="24" selection-end-line="34" selection-end-column="24" />
         </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teslakit/estela.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-4860" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/teslakit/plotting/tides.py">
@@ -392,19 +431,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="756">
-          <caret line="49" column="11" selection-start-line="49" selection-start-column="11" selection-end-line="85" />
-          <folding>
-            <element signature="e#1#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="183">
+        <state relative-caret-position="234">
           <caret line="36" column="10" selection-start-line="36" selection-start-column="10" selection-end-line="36" selection-end-column="10" />
         </state>
       </provider>
@@ -413,6 +442,43 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="232">
           <caret line="471" column="31" selection-start-line="471" selection-start-column="31" selection-end-line="471" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/io/aux_nc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-194" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/estela.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2630" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/io/cfs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="18">
+          <caret line="39" column="18" selection-start-line="33" selection-start-column="8" selection-end-line="39" selection-end-column="18" />
+          <folding>
+            <element signature="e#56#65#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/extract_SLP_CFSR.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="11" lean-forward="true" selection-start-line="11" selection-end-line="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/plot_TG_Guam.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="322">
+          <caret line="81" column="41" lean-forward="true" selection-start-line="81" selection-end-line="82" />
+          <folding>
+            <element signature="e#1#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
