@@ -9,23 +9,23 @@ import copy
 from datetime import datetime, date
 
 # pip
-from cftime._cftime import DatetimeGregorian
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
 import matplotlib.colors as colors
 from matplotlib import cm
-import pandas as pd
 
 # teslakit
-from .custom_colors import colors_dwt
 from ..util.operations import GetBestRowsCols
 from ..custom_dateutils import npdt64todatetime as n2d
+from ..custom_dateutils import get_years_months_days
 from ..kma import ClusterProbabilities
-from .awt import axplot_PCs_3D_allWTs, axplot_PCs_2D
+from .custom_colors import colors_dwt
+from .wts import axplot_WT_Probs, axplot_WT_Hist
 
 # import constants
 from .config import _faspect, _fsize, _fdpi
+
 
 def axplot_EOF(ax, EOF_value, lon, lat, ttl=''):
     'axes plot EOFs 2d map'
@@ -87,45 +87,6 @@ def axplot_DWT(ax, dwt, vmin, vmax, wt_color):
     ax.set_yticks([])
 
     return pc
-
-def axplot_DWT_Probs(ax, dwt_probs,
-                     ttl = '', vmin = 0, vmax = 0.1,
-                     cmap = 'Blues'):
-    'axes plot DWT cluster probabilities'
-
-    # clsuter transition plot
-    pc = ax.pcolor(
-        np.flipud(dwt_probs),
-        cmap=cmap, vmin=vmin, vmax=vmax,
-        edgecolors='k',
-    )
-
-    # customize axes
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(ttl, {'fontsize':10, 'fontweight':'bold'})
-
-    return pc
-
-def axplot_DWT_Hist(ax, bmus, n_clusters, ttl=''):
-    'axes plot DWT cluster count histogram'
-
-    # clsuter transition plot
-    ax.hist(
-        bmus,
-        bins = np.arange(1, n_clusters+2),
-        edgecolor='k'
-    )
-
-    # customize axes
-    #ax.grid('y')
-
-    ax.set_xticks(np.arange(1,n_clusters+1)+0.5)
-    ax.set_xticklabels(np.arange(1,n_clusters+1))
-    ax.set_xlim([1, n_clusters+1])
-    ax.tick_params(axis='both', which='major', labelsize=6)
-
-    ax.set_title(ttl, {'fontsize':10, 'fontweight':'bold'})
 
 
 def Plot_EOFs_EstelaPred(xds_PCA, n_plot, p_export=None):
@@ -355,28 +316,22 @@ def Plot_DWTs_Mean(xds_KMA, xds_var, p_export=None):
 def ClusterProbs_Month(bmus, time, wt_set, month_ix):
     'Returns Cluster probs by month_ix'
 
-    # TODO: update custom_dateutils library
     # get months
-    if isinstance(time[0], DatetimeGregorian) or isinstance(time[0], date):
-        tpd_month = np.asarray([t.month for t in time])
-
-    else:
-        tpd = pd.DatetimeIndex(time)
-        tpd_month = tpd.month
+    _, months, _ = get_years_months_days(time)
 
     if isinstance(month_ix, list):
 
         # get each month indexes
         l_ix = []
         for m_ix in month_ix:
-            ixs = np.where(tpd_month==m_ix)[0]
+            ixs = np.where(months == m_ix)[0]
             l_ix.append(ixs)
 
         # get all indexes     
         ix = np.unique(np.concatenate(tuple(l_ix)))
 
     else:
-        ix = np.where(tpd_month==month_ix)[0]
+        ix = np.where(months == month_ix)[0]
 
     bmus_sel = bmus[ix]
 
@@ -426,11 +381,11 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
     C_T = np.reshape(c_T, (n_rows, n_cols))
 
     ax_probs_T = plt.subplot(gs[:2, :2])
-    pc = axplot_DWT_Probs(ax_probs_T, C_T, ttl = 'DWT Probabilities')
+    pc = axplot_WT_Probs(ax_probs_T, C_T, ttl = 'DWT Probabilities')
 
     # plot counts histogram
     ax_hist = plt.subplot(gs[2:, :3])
-    axplot_DWT_Hist(ax_hist, bmus, n_clusters, ttl = 'DWT Counts')
+    axplot_WT_Hist(ax_hist, bmus, n_clusters, ttl = 'DWT Counts')
 
     # plot probabilities by month
     for m_ix, m_name, m_gs in l_months:
@@ -441,7 +396,7 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
 
         # plot axes
         ax_M = plt.subplot(m_gs)
-        axplot_DWT_Probs(ax_M, C_M, ttl = m_name)
+        axplot_WT_Probs(ax_M, C_M, ttl = m_name)
 
     # plot probabilities by 3 month sets
     for m_ix, m_name, m_gs in l_3months:
@@ -452,7 +407,7 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
 
         # plot axes
         ax_M = plt.subplot(m_gs)
-        axplot_DWT_Probs(ax_M, C_M, ttl = m_name, cmap='Greens')
+        axplot_WT_Probs(ax_M, C_M, ttl = m_name, cmap='Greens')
 
     # add custom colorbar
     pp = ax_probs_T.get_position()
@@ -467,80 +422,4 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
         fig.savefig(p_export, dpi=_fdpi)
         plt.close()
 
-def Plot_DWT_PCs_3D(d_PCs, n_clusters, p_export=None):
-    '''
-    Plot Annual Weather Types PCs fit - rnd comparison (3D)
-    '''
-
-    from mpl_toolkits.mplot3d import Axes3D
-
-    # get cluster colors
-    cs_awt = colors_dwt(n_clusters)
-
-    # figure
-    fig = plt.figure(figsize=(_faspect*_fsize, _fsize*2/1.66))
-    gs = gridspec.GridSpec(1, 1, wspace=0.10, hspace=0.35)
-    ax_pcs = plt.subplot(gs[0, 0], projection='3d')
-
-    # Plot PCs (3D)
-    axplot_PCs_3D_allWTs(ax_pcs, d_PCs,  cs_awt, ttl='DWT PCs')
-
-    # show / export
-    if not p_export:
-        plt.show()
-    else:
-        fig.savefig(p_export, dpi=_fdpi)
-        plt.close()
-
-def Plot_DWT_PCs(PCs, variance, bmus, n_clusters, n=3, p_export=None):
-    '''
-    Plot Daily Weather Types PCs using 2D axis
-    '''
-
-    # TODO: DUPLICADO DE teslakit/plotting/awt.py
-    # listar duplicados de plots. crear teslakit/plotting/pca.py
-
-    # get cluster colors
-    cs_awt = colors_dwt(n_clusters)
-
-    # get cluster - bmus indexes
-    d_wts = {}
-    for i in range(n_clusters):
-        d_wts[i] = np.where(bmus == i)[:]
-
-    # figure
-    fig = plt.figure(figsize=(_faspect*_fsize, _faspect*_fsize))
-    gs = gridspec.GridSpec(n-1, n-1, wspace=0.0, hspace=0.0)
-
-    for i in range(n):
-        for j in range(i+1, n):
-
-            # get PCs to plot
-            PC1 = np.divide(PCs[:,i], np.sqrt(variance[i]))
-            PC2 = np.divide(PCs[:,j], np.sqrt(variance[j]))
-
-            # plot PCs (2D)
-            ax = plt.subplot(gs[i, j-1])
-            axplot_PCs_2D(ax, PC1, PC2, d_wts, cs_awt)
-
-            # custom labels
-            if i==0:
-                ax.set_xlabel(
-                    'PC {0}'.format(j+1),
-                    {'fontsize':10, 'fontweight':'bold'}
-                )
-                ax.xaxis.set_label_position('top')
-            if j==n-1:
-                ax.set_ylabel(
-                    'PC {0}'.format(i+1),
-                    {'fontsize':10, 'fontweight':'bold'}
-                )
-                ax.yaxis.set_label_position('right')
-
-    # show / export
-    if not p_export:
-        plt.show()
-    else:
-        fig.savefig(p_export, dpi=_fdpi)
-        plt.close()
 
