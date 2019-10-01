@@ -18,16 +18,23 @@ def SS_Distributions(xds_ss,xds_kma):
         pos_cluster = np.where(xds_kma.bmus==ic)[0][:]
         ax = plt.subplot(gs[grid_row, grid_col])
         plt.hist(xds_ss.ss[pos_cluster],range=[-0.30, 0.30],bins=40,color='indigo',histtype='stepfilled',density=True, alpha=0.5)
-        ax.set_xticks([])
+        ax.set_xticks([0], minor=True)
+        #ax.set_xticks([])
         ax.set_yticks([])
 
         if grid_row == n_rows-1:
             ax.set_yticks([])
-            ax.set_xticks(np.arange(-0.30,0.31, step=0.1))
+            ax.set_xticks(np.arange(-0.30,0.31, step=0.1),minor=False)
+            ax.set_xticks([0], minor=True)
             ax.set_xlabel('SS',fontsize=14)
+            ax.xaxis.grid(True, which='minor')
+        
         else:
             ax.set_xticks([])
             ax.set_yticks([]) 
+            ax.set_xticks([0], minor=True)
+            ax.xaxis.grid(True, which='minor')
+
 
         grid_row += 1
         if grid_row >= n_rows:
