@@ -121,7 +121,12 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
                 geo_dist_ss.append(GeoDistance(i0_lat, i0_lon, i1_lat, i1_lon))
             geo_dist_ss = np.asarray(geo_dist_ss)
 
-            vel = geo_dist_ss * 111.0/6.0  # km/h
+            # get delta time in hours (irregular data time delta)
+            delta_h = np.diff(
+                time[i_storm][~np.isnat(time[i_storm])]
+            ).astype('timedelta64[h]').astype(float)
+
+            vel = geo_dist_ss * 111.0/delta_h  # km/h
 
             # promediate vel 
             velpm = (vel[:-1] + vel[1:])/2
@@ -184,6 +189,7 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
 
     # cut storm dataset to selection
     xds_TCs_sel = xds_TCs.isel(storm=l_storms_area)
+    xds_TCs_sel = xds_TCs_sel.assign_coords(storm = np.array(l_storms_area))
 
     # store storms parameters 
     xds_TCs_sel_params = xr.Dataset(
@@ -200,7 +206,7 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
             'index_out':(('storm'), np.array(l_ix_out)),
         },
         coords = {
-            'storm':(('storm'), xds_TCs_sel.storm.values[:])
+            'storm':(('storm'), np.array(l_storms_area))
         },
         attrs = {
             'point_lon' : p_lon,
