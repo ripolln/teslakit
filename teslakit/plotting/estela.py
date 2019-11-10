@@ -1,14 +1,13 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import os
 import os.path as op
-import numpy as np
 import copy
 from datetime import datetime, date
 
 # pip
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
@@ -27,7 +26,20 @@ from .wts import axplot_WT_Probs, axplot_WT_Hist
 from .config import _faspect, _fsize, _fdpi
 
 
-def axplot_EOF(ax, EOF_value, lon, lat, ttl=''):
+def add_land_mask(ax, lon, lat, land, color):
+    'addsland mask pcolormesh to existing pcolormesh'
+
+    # select land in mask
+    landc = land.copy()
+    landc[np.isnan(land)]=1
+    landc[land==1]=np.nan
+
+    ax.pcolormesh(
+        lon, lat, landc,
+        cmap=colors.ListedColormap([color]), shading='gouraud',
+    )
+
+def axplot_EOF(ax, EOF_value, lon, lat, ttl='', land=None):
     'axes plot EOFs 2d map'
 
     cmap = cm.get_cmap('RdBu_r')
@@ -38,6 +50,10 @@ def axplot_EOF(ax, EOF_value, lon, lat, ttl=''):
         cmap=cmap, shading='gouraud',
         clim=(-1,1),
     )
+
+    # optional mask land
+    if type(land).__module__ == np.__name__:
+        add_land_mask(ax, lon, lat, land, 'grey')
 
     # axis and title
     ax.set_title(
@@ -69,11 +85,10 @@ def axplot_EOF_evolution(ax, time, EOF_evol):
     ax.grid(True, which='both', axis='x', linestyle='--', color='grey')
     ax.tick_params(axis='both', which='major', labelsize=8)
 
-def axplot_DWT(ax, dwt, vmin, vmax, wt_color):
+def axplot_DWT(ax, dwt, vmin, vmax, wt_num, land=None, wt_color=None):
     'axes plot EOFs 2d map'
 
     cmap = copy.deepcopy(cm.get_cmap('RdBu_r'))
-    cmap.set_bad(color = wt_color, alpha=0.2)
 
     # EOF pcolormesh 
     pc = ax.pcolormesh(
@@ -82,6 +97,19 @@ def axplot_DWT(ax, dwt, vmin, vmax, wt_color):
         clim = (vmin, vmax),
     )
 
+    # optional mask land
+    if type(land).__module__ == np.__name__:
+        landc = land.copy()
+        landc[np.isnan(land)]=1
+        landc[land==1]=np.nan
+        ax.pcolormesh(
+            np.flipud(landc),
+            cmap=colors.ListedColormap([wt_color]), shading='gouraud',
+        )
+
+    # wt text
+    ax.text(0.87, 0.85, wt_num, transform=ax.transAxes, fontweight='bold')
+
     # customize axis
     ax.set_xticks([])
     ax.set_yticks([])
@@ -89,7 +117,7 @@ def axplot_DWT(ax, dwt, vmin, vmax, wt_color):
     return pc
 
 
-def Plot_EOFs_EstelaPred(xds_PCA, n_plot, p_export=None):
+def Plot_EOFs_EstelaPred(xds_PCA, n_plot, mask_land=None, p_export=None):
     '''
     Plot annual EOFs for 3D predictors
 
@@ -133,7 +161,6 @@ def Plot_EOFs_EstelaPred(xds_PCA, n_plot, p_export=None):
         base = np.nan * np.ones(data_pos.shape)
         base[data_pos] = var_grd_1d
 
-
         var = base[:int(len(base)/2)]
         grd = base[int(len(base)/2):]
 
@@ -152,8 +179,8 @@ def Plot_EOFs_EstelaPred(xds_PCA, n_plot, p_export=None):
         ax_evol = plt.subplot(gs[3, :])
 
         # EOF pcolormesh (SLP and GRADIENT)
-        axplot_EOF(ax_EOF_1, C1, lon, lat, ttl = pred_name)
-        axplot_EOF(ax_EOF_2, C2, lon, lat, ttl = 'GRADIENT')
+        axplot_EOF(ax_EOF_1, C1, lon, lat, ttl = pred_name, land=mask_land)
+        axplot_EOF(ax_EOF_2, C2, lon, lat, ttl = 'GRADIENT', land=mask_land)
 
         # time series EOF evolution
         evol =  PCs[it,:]/np.sqrt(variance[it])
@@ -191,7 +218,11 @@ def Plot_ESTELA(pnt_lon, pnt_lat, estela_F, estela_D,
     estela_lat = estela_F.latitude.values[:]
     estela_energy = estela_F.values[:]
     estela_days = estela_D.values[:]
-    estela_max = np.nanmax(estela_energy)
+
+    # energy units
+    f_comp = 1
+    aux_energy = np.log2(estela_energy / f_comp * 360)
+    aux_energy[aux_energy<0] = 0
 
     # figure
     fig, ax = plt.subplots(1, figsize=(_faspect*_fsize, _fsize))
@@ -210,29 +241,34 @@ def Plot_ESTELA(pnt_lon, pnt_lat, estela_F, estela_D,
     m.drawparallels(np.arange(-90, 90, 20), labels = [1,1,0,0])
     m.drawmeridians(np.arange(0, 360, 20), labels = [0,0,1,0])
 
-    # aux cmap truncate function
-    def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
-        new_cmap = colors.LinearSegmentedColormap.from_list(
-            'trunc({n},{a:.2f},{b:.2f})'.format(
-                n=cmap.name, a=minval, b=maxval),
-            cmap(np.linspace(minval, maxval, n)))
-        return new_cmap
-
     # plot estela energy (pcolormesh)
     cmap = plt.get_cmap('jet')
-    custom_cmap = truncate_colormap(cmap, 0.2, 1)
     pc = m.pcolormesh(
-        estela_lon, estela_lat, estela_energy,
-        cmap = custom_cmap,  shading='gouraud',
-        clim = (0, estela_max),
+        estela_lon, estela_lat, aux_energy,
+        cmap = 'jet',  shading='gouraud',
     )
-    cb = m.colorbar(pc, location='bottom')
-    cb.set_label('Energy Sources')
+    pc.set_clim(0,11)
+
+    # colorbar
+    custom_ticks = np.arange(11+1)
+    cb = m.colorbar(pc, location='bottom', ticks=custom_ticks)
+    cb.set_ticklabels(2**custom_ticks)
+    cb.set_label(r'$\frac{kW/m}{^\circ}$ x360', x = 1.05,
+                 labelpad=-30,fontsize=9)
 
     # plot estela days (contour)
+    maxd = int(np.nanmax(estela_days))+1
+    black_levels = np.arange(1, maxd, 3)
+    grey_levels = np.arange(1, maxd, 1)
+    grey_levels = np.setdiff1d(grey_levels, black_levels)
+
+    ax.contour(
+        estela_lon, estela_lat, estela_days,
+        colors='grey', levels=grey_levels,
+    )
     ac = ax.contour(
         estela_lon, estela_lat, estela_days,
-        colors='k'
+        colors='k', levels=black_levels,
     )
     ax.clabel(ac, ac.levels, inline=True, fmt='%d', fontsize=10)
 
@@ -246,9 +282,10 @@ def Plot_ESTELA(pnt_lon, pnt_lat, estela_F, estela_D,
         fig.savefig(p_export, dpi=_fdpi)
         plt.close()
 
-def Plot_DWTs_Mean(xds_KMA, xds_var, p_export=None):
+def Plot_DWTs_Mean_Anom(xds_KMA, xds_var, kind='mean', mask_land=None, p_export=None):
     '''
     Plot Daily Weather Types (bmus mean)
+    kind - mean/anom
     '''
 
     bmus = xds_KMA['sorted_bmus'].values[:]
@@ -268,16 +305,23 @@ def Plot_DWTs_Mean(xds_KMA, xds_var, p_export=None):
     fig = plt.figure(figsize=(_faspect*_fsize, _fsize))
 
     gs = gridspec.GridSpec(n_rows, n_cols, wspace=0.0, hspace=0.0)
-    gr = 0
-    gc = 0
+    gr, gc = 0, 0
 
     for ic in range(n_clusters):
-        # data mean
-        it = np.where(bmus==ic)[0][:]
-        c_mean = xds_var.isel(time=it).mean(dim='time')
 
-        # convert input units
-        c_mean_s = np.multiply(c_mean, scale)
+        if kind=='mean':
+            # data mean
+            it = np.where(bmus==ic)[0][:]
+            c_mean = xds_var.isel(time=it).mean(dim='time')
+            c_plot = np.multiply(c_mean, scale)  # apply scale
+
+        elif kind=='anom':
+            # data anomally
+            it = np.where(bmus==ic)[0][:]
+            t_mean = xds_var.mean(dim='time')
+            c_mean = xds_var.isel(time=it).mean(dim='time')
+            c_anom = c_mean - t_mean
+            c_plot = np.multiply(c_anom, scale)  # apply scale
 
         # dwt color
         clr = cs_dwt[ic]
@@ -285,9 +329,15 @@ def Plot_DWTs_Mean(xds_KMA, xds_var, p_export=None):
         # axes plot
         ax = plt.subplot(gs[gr, gc])
         pc = axplot_DWT(
-            ax, np.flipud(c_mean_s),
-            vmin = var_min, vmax = var_max, wt_color = clr
+            ax, np.flipud(c_plot),
+            vmin = var_min, vmax = var_max,
+            wt_num = ic+1,
+            land = mask_land, wt_color = clr,
         )
+
+        # anomalies colorbar center at 0 
+        if kind == 'anom':
+            pc.set_clim(-6,6)
 
         # get lower positions
         if gr==n_rows-1 and gc==0:
@@ -304,7 +354,10 @@ def Plot_DWTs_Mean(xds_KMA, xds_var, p_export=None):
     # add a colorbar        
     cbar_ax = fig.add_axes([pax_l.x0, pax_l.y0-0.05, pax_r.x1 - pax_l.x0, 0.02])
     cb = fig.colorbar(pc, cax=cbar_ax, orientation='horizontal')
-    cb.set_label('Pressure (mbar)')
+    if kind=='mean':
+        cb.set_label('Pressure (mbar)')
+    elif kind=='anom':
+        cb.set_label('Pressure anomalies (mbar)')
 
     # show / export
     if not p_export:
@@ -388,6 +441,7 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
     axplot_WT_Hist(ax_hist, bmus, n_clusters, ttl = 'DWT Counts')
 
     # plot probabilities by month
+    vmax = 0.15
     for m_ix, m_name, m_gs in l_months:
 
         # get probs matrix
@@ -396,9 +450,12 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
 
         # plot axes
         ax_M = plt.subplot(m_gs)
-        axplot_WT_Probs(ax_M, C_M, ttl = m_name)
+        axplot_WT_Probs(ax_M, C_M, ttl = m_name, vmax=vmax)
+
+    # TODO: add second colorbar?
 
     # plot probabilities by 3 month sets
+    vmax = 0.15
     for m_ix, m_name, m_gs in l_3months:
 
         # get probs matrix
@@ -407,7 +464,7 @@ def Plot_DWTs_Probs(bmus, bmus_time, n_clusters, p_export=None):
 
         # plot axes
         ax_M = plt.subplot(m_gs)
-        axplot_WT_Probs(ax_M, C_M, ttl = m_name, cmap='Greens')
+        axplot_WT_Probs(ax_M, C_M, ttl = m_name, vmax=vmax, cmap='Greens')
 
     # add custom colorbar
     pp = ax_probs_T.get_position()

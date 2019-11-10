@@ -5,6 +5,8 @@ from math import radians, degrees, sin, cos, asin, acos, sqrt, atan2, pi
 import numpy as np
 import xarray as xr
 
+from .util.operations import GetUniqueRows
+
 
 def GeoDistance(lat1, lon1, lat2, lon2):
     'Returns great circle distance between points in degrees'
@@ -43,7 +45,7 @@ def GeoAzimuth(lat1, lon1, lat2, lon2):
 
 def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
     '''
-    Extracts TCs inside circle - used with NWO database
+    Extracts TCs inside circle - used with NWO or Nakajo databases
 
     xds_TCs: tropical cyclones track database
         lon, lat, pressure variables
@@ -122,9 +124,21 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
             geo_dist_ss = np.asarray(geo_dist_ss)
 
             # get delta time in hours (irregular data time delta)
-            delta_h = np.diff(
-                time[i_storm][~np.isnat(time[i_storm])]
-            ).astype('timedelta64[h]').astype(float)
+            if isinstance(time[i_storm][0], np.datetime64):
+                # round to days
+                time[i_storm] = np.array(
+                    [np.datetime64(xt, 'h') for xt in time[i_storm]]
+                )
+
+                delta_h = np.diff(
+                    time[i_storm][~np.isnat(time[i_storm])]
+                ).astype('timedelta64[h]').astype(float)
+
+            else:
+                # nakajo: time already in hours
+                delta_h = np.diff(
+                    time[i_storm][~np.isnan(time[i_storm])]
+                ).astype(float)
 
             vel = geo_dist_ss * 111.0/delta_h  # km/h
 
@@ -168,7 +182,13 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
             p_dm = np.where((dist_in==np.min(dist_in)))[0]  # closest to point
 
             time_s_in = time[i_storm][ix_in]  # time
-            time_closest = np.datetime64(time_s_in[p_dm][0], 'D')
+            time_closest = time_s_in[p_dm][0]  # time closest to point 
+
+            # filter storms 
+            if np.isnan(np.array(prs_s_in)).any() or \
+               (np.array(prs_s_in) <= 860).any() or \
+               gamma == 0.0:
+                continue
 
             # store parameters
             l_storms_area.append(i_storm)
@@ -207,97 +227,6 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
         },
         coords = {
             'storm':(('storm'), np.array(l_storms_area))
-        },
-        attrs = {
-            'point_lon' : p_lon,
-            'point_lat' : p_lat,
-            'point_r' : r,
-        }
-    )
-
-    return xds_TCs_sel, xds_TCs_sel_params
-
-def Extract_Circle_Nakajo(xds_TCs, p_lon, p_lat, r, d_vns):
-    '''
-    Extracts TCs inside circle - optimized for Nakajo
-
-    xds_TCs: tropical cyclones track database
-        lon, lat, pressure variables
-        storm dimension
-
-    circle defined by:
-        p_lon, p_lat  -  circle center
-        r             -  circle radius (degree)
-
-    d_vns: dictionary to set longitude, latitude, time and pressure varnames
-
-    returns:
-        xds_area: selection of xds_TCs inside circle
-        xds_inside: contains TCs custom data inside circle
-    '''
-
-    # point longitude and latitude
-    lonlat_p = np.array([[p_lon, p_lat]])
-
-    # get names of vars: longitude, latitude, pressure and time
-    nm_lon = d_vns['longitude']
-    nm_lat = d_vns['latitude']
-    nm_prs = d_vns['pressure']
-
-    # storms longitude, latitude, pressure and time (if available)
-    lon = xds_TCs[nm_lon].values[:]
-    lat = xds_TCs[nm_lat].values[:]
-    prs = xds_TCs[nm_prs].values[:]
-
-    # get storms inside circle area
-    n_storms = xds_TCs.storm.shape[0]
-    l_storms_area = []
-
-    # inside parameters holders
-    l_prs_min_in = []   # circle minimun pressure
-    l_categ_in = []     # circle storm category
-
-    for i_storm in range(n_storms):
-
-        # stack storm longitude, latitude
-        lonlat_s = np.column_stack(
-            (lon[i_storm], lat[i_storm])
-        )
-
-        # index for removing nans
-        ix_nonan = ~np.isnan(lonlat_s).any(axis=1)
-        lonlat_s = lonlat_s[ix_nonan]
-
-        # calculate geodesic distance (degree)
-        geo_dist = []
-        for lon_ps, lat_ps in lonlat_s:
-            geo_dist.append(GeoDistance(lat_ps, lon_ps, p_lat, p_lon))
-        geo_dist = np.asarray(geo_dist)
-
-        # find storm inside circle and calculate parameters
-        ix_in = np.where(geo_dist < r)[0][:]
-        if ix_in.any():
-
-            prs_s_in = prs[i_storm][ix_in]          # pressure
-            prs_s_min = np.min(prs_s_in)            # pressure minimun
-            categ = GetStormCategory(prs_s_min)     # category
-
-            # store parameters
-            l_storms_area.append(i_storm)
-            l_prs_min_in.append(np.array(prs_s_min))
-            l_categ_in.append(np.array(categ))
-
-    # cut storm dataset to selection
-    xds_TCs_sel = xds_TCs.isel(storm=l_storms_area)
-
-    # store storms parameters 
-    xds_TCs_sel_params = xr.Dataset(
-        {
-            'pressure_min':(('storm'), np.array(l_prs_min_in)),
-            'category':(('storm'), np.array(l_categ_in)),
-        },
-        coords = {
-            'storm':(('storm'), xds_TCs_sel.storm.values[:])
         },
         attrs = {
             'point_lon' : p_lon,
@@ -350,4 +279,54 @@ def SortCategoryCount(np_categ, nocat=9):
             rc+=1
 
     return np_sort.astype(int)
+
+def GetCategoryChangeProbs(xds_r1, xds_r2):
+    'Calculates category change probabilities from r1 to r2'
+
+    # Get storm category inside both circles
+    n_storms = len(xds_r1.storm)
+    categ_r1r2 = np.empty((n_storms, 2))
+    for i in range(len(xds_r1.storm)):
+
+        # category inside R1
+        storm_in_r1 = xds_r1.isel(storm=[i])
+        storm_id = storm_in_r1.storm.values[0]
+        storm_cat_r1 = storm_in_r1.category
+
+        # category inside R2
+        if storm_id in xds_r2.storm.values[:]:
+            storm_in_r2 = xds_r2.sel(storm=[storm_id])
+            storm_cat_r2 = storm_in_r2.category
+        else:
+            storm_cat_r2 = 9  # no category
+
+        # store categories
+        categ_r1r2[i,:] = [storm_cat_r1, storm_cat_r2]
+
+    # count category changes and sort it
+    categ_count = GetUniqueRows(categ_r1r2)
+    categ_count = SortCategoryCount(categ_count)
+
+    # calculate probability
+    m_count = np.reshape(categ_count[:,2], (6,-1)).T
+    m_sum = np.sum(m_count,axis=0)
+
+    probs = m_count.astype(float)/m_sum.astype(float)
+    probs_cs = np.cumsum(probs, axis=0)
+
+    # store output using xarray
+    xds_categ_cp = xr.Dataset(
+        {
+            'category_change_count': (('category','category'), m_count[:-1,:]),
+            'category_change_sum': (('category'), m_count[-1,:]),
+            'category_change_probs': (('category','category'), probs[:-1,:]),
+            'category_nochange_probs': (('category'), probs[-1,:]),
+            'category_change_cumsum': (('category','category'), probs_cs[:-1,:]),
+        },
+        coords = {
+            'category': [0,1,2,3,4,5]
+        }
+    )
+
+    return xds_categ_cp
 

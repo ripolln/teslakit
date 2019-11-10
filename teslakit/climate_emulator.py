@@ -26,7 +26,7 @@ def tqdm(*args, **kwargs):
 
 # tk
 from .statistical import Empirical_ICDF
-from .waves import TWL
+from .waves import AWL
 from .extremes import FitGEV_KMA_Frechet, Smooth_GEV_Shape, ACOV
 from .plotting.extremes import Plot_GEVParams, Plot_ChromosomesProbs, \
         Plot_SigmaCorrelation
@@ -241,7 +241,7 @@ class Climate_Emulator(object):
         'Returns xarray.Dataset with max. TWL value and time'
 
         # Get TWL from waves partitions data 
-        xda_TWL = TWL(xds_WVS_pts.hs, xds_WVS_pts.tp)
+        xda_TWL = AWL(xds_WVS_pts.hs, xds_WVS_pts.tp)
 
         # find max TWL inside each storm 
         TWL_WT_max = []
@@ -721,6 +721,11 @@ class Climate_Emulator(object):
             dims: storm
         '''
 
+        # filter parameters
+        hs_min, hs_max = 0, 15
+        tp_min, tp_max = 2, 25
+        ws_min, ws_max = 0.001, 0.06
+
         # waves families - variables (sorted for simulation output)
         wvs_fams = self.fams
         wvs_fams_vars = [
@@ -754,6 +759,7 @@ class Climate_Emulator(object):
                 pr = chrom_probs[iwt] / np.sum(chrom_probs[iwt])
                 ci = choice(range(chrom.shape[0]), 1, p=pr)
                 crm = chrom[ci].astype(int).squeeze()
+
 
                 # get sigma correlation for this WT - crm combination 
                 corr = sigma[WT][int(ci)]['corr']
@@ -798,6 +804,7 @@ class Climate_Emulator(object):
                     ppf_Dir = self.icdf_GEV_or_EMP(
                         vn_Dir, vv_Dir, pb_Dir, xds_GEV_Par, iwt)
 
+
                     # store simulation data
                     is0,is1 = wvs_fams.index(fam_n)*3, (wvs_fams.index(fam_n)+1)*3
                     sim_row[is0:is1] = [ppf_Hs, ppf_Tp, ppf_Dir]
@@ -814,13 +821,35 @@ class Climate_Emulator(object):
                 # generate sim_row with sorted waves families variables
                 sim_row = np.stack([tws[vn].values[ri] for vn in wvs_fams_vars])
 
-            # no nans or values < 0 stored 
-            if ~np.isnan(sim_row).any() and len(np.where(sim_row<0)[0])==0:
-                sims_out[c] = sim_row
-                c+=1
+            # Filters
 
-                # progress bar
-                pbar.update(1)
+            # all 0 chromosomes
+            if all(c == 0 for c in crm):
+                continue
+
+            # nan / negative values
+            if np.isnan(sim_row).any() or len(np.where(sim_row<0)[0])!=0:
+                continue
+
+            # Hs and Tp
+            hs_s = sim_row[0::3][crm==1]
+            tp_s = sim_row[1::3][crm==1]
+            if any(v <= hs_min for v in hs_s) or any(v >= hs_max for v in hs_s) \
+               or any(v <= tp_min for v in tp_s) or any(v >= tp_max for v in tp_s):
+                continue
+
+            # wave stepness 
+            ws_s = hs_s / (1.56 * tp_s**2 )
+            if any(v <= ws_min for v in ws_s) or any(v >= ws_max for v in ws_s):
+                continue
+
+            # store simulation
+            sim_row[sim_row==0] = np.nan  # nan data at crom 0 
+            sims_out[c] = sim_row
+            c+=1
+
+            # progress bar
+            pbar.update(1)
 
         pbar.close()
 
@@ -883,7 +912,7 @@ class Climate_Emulator(object):
         # new progress bar 
         pbar = tqdm(
             total=len(DWT_sim),
-            desc = 'C.E: Sim. TCs'
+            desc = 'C.E: Sim. TCs  '
         )
 
         # Simulate TCs (mu, ss, tau)

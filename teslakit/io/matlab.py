@@ -8,6 +8,7 @@ import os.path as op
 # pip
 import scipy.io as sio
 from scipy.io.matlab.mio5_params import mat_struct
+from scipy.interpolate import griddata
 import h5py
 import xarray as xr
 import numpy as np
@@ -138,6 +139,40 @@ def ReadEstelaMat(p_mfile):
         longitude = mesh_lon[0,:]
         latitude = mesh_lat[:,0]
 
+        # estela point
+        lon_pnt = mf['TP']['lonp'][:]
+        lat_pnt = mf['TP']['latp'][:]
+
+        # simple estela land mask
+        est_D = mf['C']['traveldays_interp']['y1993to2012'][:]
+        mask_land = np.ones(est_D.shape) * np.nan
+        mask_land[np.where(est_D<1000000000)]=1
+
+        # mask_shadow (islands), from polar data
+        pol_X = mf['Polar']['Xcntr'][:]
+        pol_Y = mf['Polar']['Y'][:]
+        pol_Fe = mf['C']['Polar_FEmedia']['y1993to2012'][:]
+
+        # interpolate polar to 2D grid to generate mask_shadow
+        interp_in = np.column_stack((pol_X.ravel(),pol_Y.ravel()))
+        interp_out = pol_Fe.ravel()
+        grid_x, grid_y = np.meshgrid(longitude, latitude)
+        mask_shadow = griddata(interp_in, interp_out, (grid_x, grid_y), method='nearest')
+        mask_shadow[~np.isnan(mask_shadow)]=1
+
+        # generate mask for 0.95 energy
+        pol_Fe_95 = pol_Fe.copy()
+        pol_Fe_cs = np.nancumsum(pol_Fe, axis=0)
+        val95 = pol_Fe_cs[-1]*0.95
+        for c in range(pol_Fe_cs.shape[1]):
+            ix_del = np.where(pol_Fe_cs[:,c]>=val95[c])[0][0]
+            pol_Fe_95[ix_del:,c] = np.nan
+
+        interp_out = pol_Fe_95.ravel()
+        grid_x, grid_y = np.meshgrid(longitude, latitude)
+        mask_e95 = griddata(interp_in, interp_out, (grid_x, grid_y), method='nearest')
+        mask_e95[~np.isnan(mask_e95)]=1
+
         # fields
         d_D = {}
         d_F = {}
@@ -153,17 +188,20 @@ def ReadEstelaMat(p_mfile):
             d_F[fd][d_Fthreas[fd]<threshold/100] = np.nan
             d_Fthreas[fd][d_Fthreas[fd]<threshold/100] = np.nan
 
-
     # return xarray.Dataset
     xdset = xr.Dataset(
         {
+            'mask_land':(('latitude','longitude'), mask_land),
+            'mask_shadow':(('latitude','longitude'), mask_shadow),
+            'mask_e95':(('latitude','longitude'), mask_e95),
         },
         coords = {
             'longitude': longitude,
             'latitude': latitude,
         },
         attrs = {
-            #'first_day':np.floor(np.nanmax(d_D['y1993to2012']))+1
+            'pnt_longitude': lon_pnt,
+            'pnt_latitude': lat_pnt,
         }
     )
 
