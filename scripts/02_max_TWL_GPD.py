@@ -76,14 +76,15 @@ twl_pareto = genpareto.pdf(ejex, shape, location, scale)
 ax2.plot(ejex, twl_pareto, '-.k')
 
 plt.legend()
-#plt.show()
+plt.show()
 
 
 kk = st.kstest(variable, genpareto.cdf, [shape, location, scale])
 print(kk) # pvalue debería ser mayor a 0.05 para que fuesen de la misma distribucion??
+
 # If the p-value is less than 0.05, we reject the null hypothesis that there's no difference between
 # the means and conclude that a significant difference does exist. If the p-value is larger than 0.05,
 # we cannot conclude that a significant difference exists.
 
 
-plt.show()
+

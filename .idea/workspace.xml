@@ -2,14 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="81db804e-e9d6-4c80-a543-ceb767957c70" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/scripts/max_TWL_GPD.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_GUAM/09_SLP_ESTELA_ALR_Covariates.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_GUAM/Nakajo.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/08_SLP_ESTELA_PCA_KMArg.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/nb_KWAJALEIN/08_SLP_ESTELA_PCA_KMArg.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/kk.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/max_TWL_GPD.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/max_TWLarea_POT.py" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -22,29 +18,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/teslakit/intradaily.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2358">
-              <caret line="135" column="32" selection-start-line="135" selection-start-column="23" selection-end-line="135" selection-end-column="32" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/scripts/max_TWLarea_POT.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="9">
-              <caret line="181" column="64" selection-start-line="181" selection-start-column="64" selection-end-line="181" selection-end-column="64" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/scripts/max_TWL_GPD.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="353">
-              <caret line="87" lean-forward="true" selection-start-line="87" selection-end-line="87" />
-              <folding>
-                <element signature="e#1#20#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="1872">
+              <caret line="108" column="41" selection-start-line="108" selection-start-column="41" selection-end-line="108" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -52,11 +27,75 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/teslakit/statistical.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="356">
-              <caret line="70" column="15" lean-forward="true" selection-start-line="70" selection-end-line="71" />
+            <state relative-caret-position="1170">
+              <caret line="70" column="15" selection-start-line="70" selection-end-line="71" />
               <folding>
                 <element signature="e#54#72#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/scripts/01_max_TWLarea_POT.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2862">
+              <caret line="166" column="11" selection-start-line="166" selection-start-column="11" selection-end-line="169" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/scripts/03_max_TWL_variables.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="630">
+              <caret line="55" column="15" selection-start-line="55" selection-end-line="55" selection-end-column="15" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="5670">
+              <caret line="337" column="49" selection-start-line="337" selection-start-column="49" selection-end-line="338" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teslakit/plotting/wts.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="6840">
+              <caret line="399" column="19" selection-start-line="399" selection-start-column="19" selection-end-line="399" selection-end-column="19" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teslakit/plotting/ss.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <folding>
+                <element signature="e#0#31#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teslakit/plotting/pcs.py">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teslakit/plotting/awt.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="4248">
+              <caret line="260" column="21" selection-start-line="260" selection-start-column="8" selection-end-line="260" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -72,7 +111,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>ReadGowMat</find>
       <find>estela</find>
       <find>datematlab2datetime</find>
       <find>dr</find>
@@ -102,6 +140,7 @@
       <find>Calculate_Hydrographs</find>
       <find>cdf</find>
       <find>data</find>
+      <find>n_clusters</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -126,11 +165,15 @@
         <option value="$PROJECT_DIR$/scripts/max_TWL.py" />
         <option value="$PROJECT_DIR$/scripts/max_TWL_POT.py" />
         <option value="$PROJECT_DIR$/scripts/max_TWLarea_POT.py" />
+        <option value="$PROJECT_DIR$/scripts/max_TWL_variables.py" />
         <option value="$PROJECT_DIR$/scripts/max_TWL_GPD.py" />
+        <option value="$PROJECT_DIR$/scripts/01_max_TWLarea_POT.py" />
+        <option value="$PROJECT_DIR$/scripts/02_max_TWL_GPD.py" />
+        <option value="$PROJECT_DIR$/scripts/03_max_TWL_variables.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="y" value="23" />
     <option name="width" value="1280" />
     <option name="height" value="777" />
@@ -158,6 +201,12 @@
               <item name="teslakit" type="462c0819:PsiDirectoryNode" />
               <item name="teslakit" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="teslakit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
+              <item name="teslakit" type="462c0819:PsiDirectoryNode" />
+              <item name="plotting" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -181,8 +230,8 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.max_TWL_GPD">
-    <configuration name="kk" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager" selected="Python.03_max_TWL_variables">
+    <configuration name="01_max_TWLarea_POT" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="teslakit" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -194,7 +243,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/kk.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/01_max_TWLarea_POT.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -203,7 +252,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="max_TWL" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="02_max_TWL_GPD" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="teslakit" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -215,7 +264,28 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/max_TWL.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/02_max_TWL_GPD.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="03_max_TWL_variables" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="teslakit" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/03_max_TWL_variables.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -245,7 +315,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="max_TWL_POT" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="max_TWL_variables" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="teslakit" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -257,28 +327,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/max_TWL_POT.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="max_TWLarea_POT" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="teslakit" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/max_TWLarea_POT.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/max_TWL_variables.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -289,11 +338,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.03_max_TWL_variables" />
+        <item itemvalue="Python.02_max_TWL_GPD" />
+        <item itemvalue="Python.01_max_TWLarea_POT" />
         <item itemvalue="Python.max_TWL_GPD" />
-        <item itemvalue="Python.max_TWLarea_POT" />
-        <item itemvalue="Python.max_TWL_POT" />
-        <item itemvalue="Python.max_TWL" />
-        <item itemvalue="Python.kk" />
+        <item itemvalue="Python.max_TWL_variables" />
       </list>
     </recent_temporary>
   </component>
@@ -301,13 +350,14 @@
     <configuration />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1280" height="777" extended-state="0" />
+    <frame x="0" y="23" width="1280" height="777" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.19459888" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16521049" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.29873773" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.17250673" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -401,13 +451,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teslakit/plotting/awt.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="471" column="31" selection-start-line="471" selection-start-column="31" selection-end-line="471" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/teslakit/io/aux_nc.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-194" />
@@ -430,20 +473,6 @@
           <folding>
             <element signature="e#56#85#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teslakit/plotting/wts.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="312">
-          <caret line="399" column="19" selection-start-line="399" selection-start-column="19" selection-end-line="399" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="994">
-          <caret line="286" column="23" selection-start-line="286" selection-start-column="13" selection-end-line="286" selection-end-column="23" />
         </state>
       </provider>
     </entry>
@@ -601,13 +630,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teslakit/intradaily.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2358">
-          <caret line="135" column="32" selection-start-line="135" selection-start-column="23" selection-end-line="135" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/teslakit/waves.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -617,29 +639,79 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/max_TWL_variables.py" />
+    <entry file="file://$PROJECT_DIR$/scripts/max_TWL_GPD.py" />
+    <entry file="file://$PROJECT_DIR$/scripts/max_TWLarea_POT.py" />
+    <entry file="file://$PROJECT_DIR$/scripts/02_max_TWL_GPD.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1155">
+          <caret line="80" selection-start-line="80" selection-end-line="80" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/intradaily.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1872">
+          <caret line="108" column="41" selection-start-line="108" selection-start-column="41" selection-end-line="108" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/teslakit/statistical.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="70" column="15" lean-forward="true" selection-start-line="70" selection-end-line="71" />
+        <state relative-caret-position="1170">
+          <caret line="70" column="15" selection-start-line="70" selection-end-line="71" />
           <folding>
             <element signature="e#54#72#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/max_TWLarea_POT.py">
+    <entry file="file://$PROJECT_DIR$/scripts/01_max_TWLarea_POT.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9">
-          <caret line="181" column="64" selection-start-line="181" selection-start-column="64" selection-end-line="181" selection-end-column="64" />
+        <state relative-caret-position="2862">
+          <caret line="166" column="11" selection-start-line="166" selection-start-column="11" selection-end-line="169" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/max_TWL_GPD.py">
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/estela.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="353">
-          <caret line="87" lean-forward="true" selection-start-line="87" selection-end-line="87" />
+        <state relative-caret-position="5670">
+          <caret line="337" column="49" selection-start-line="337" selection-start-column="49" selection-end-line="338" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/wts.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6840">
+          <caret line="399" column="19" selection-start-line="399" selection-start-column="19" selection-end-line="399" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/ss.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
           <folding>
-            <element signature="e#1#20#0" expanded="true" />
+            <element signature="e#0#31#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/pcs.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teslakit/plotting/awt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4248">
+          <caret line="260" column="21" selection-start-line="260" selection-start-column="8" selection-end-line="260" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/03_max_TWL_variables.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="630">
+          <caret line="55" column="15" selection-start-line="55" selection-end-line="55" selection-end-column="15" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
         </state>
       </provider>
