@@ -3,52 +3,98 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from datetime import timedelta
+import xarray as xr
+from datetime import timedelta, datetime
 import sys
 from teslakit.io.matlab import ReadMatfile
 from teslakit.custom_dateutils import DateConverter_Mat2Py
-from teslakit.waves import TWL as Runup
+from teslakit.waves import AWL as Runup
+from teslakit.io.aux_nc import StoreBugXdset
+
+
+plt.rc('xtick', labelsize=5)
+plt.rc('ytick', labelsize=5)
 
 # read to install scikit-extremes--> https://github.com/kikocorreoso/scikit-extremes
 # import skextremes as ske
 # No puedo usarlo, POT no está integrado
 
-
 rutin = '/Users/albacid/Projects/SERDP/results_files/'
 
 #----------------------------------------------------------------
-# 3-hourly offshore values:
-matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
+# OFFSHORE
 
-## 3-hourly coast values:
-#matfile = rutin + 'Historicos/Reconstr_Hs_Tp_Dir_Level_NOtransectRoi_Historical_2016_p6_in30m_snell.mat'
+# # 3-hourly historical offshore values (GOW data):
+# id = ['offshore', 'historical']
+# matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
+
+# hourly simulated offshore values (output teslakit):
+id = ['offshore', 'synthetic']
+matfile = rutin + 'Simulados/Hourly_100000years_Hs_Tp_Dir_Level_v2.mat'
+
+#----------------
+# NEARSHORE
+
+# # 3-hourly historical reconstructed values:
+# id = ['nearshore', 'historical']
+# matfile = rutin + 'Historicos/Reconstr_Hs_Tp_Dir_Level_NOtransectRoi_Historical_2016_p6.mat'
+
+
+# # hourly simulated reconstructed values:
+# id = ['nearshore', 'synthetic']
+# matfile = rutin + 'Simulados/Reconstr_Hs_Tp_Dir_Level_NOtransectRoi_100000years_p6_clean.mat'
 #----------------------------------------------------------------
 
 
+#----------------------------------------------------------------
 # Load data
 data = ReadMatfile(matfile)
-# print(data.keys())
 
-ss = data['ss']
-at = data['at']
-mmsl = data['mmsl']/1000.0 # to meters??
-hs = data['hs']
-tp = data['tp']
+if id[1] == 'historical':
+    ss = data['ss']
+    at = data['at']
+    mmsl = data['mmsl']/1000.0 # to meters??
+    hs = data['hs']
+    tp = data['tp']
+    bmus = data['bmus']
 
-time = DateConverter_Mat2Py(data['time'])
-dt_hours = (time[2]-time[1]).total_seconds()/3600.0
+    time = DateConverter_Mat2Py(data['time'])
+    dt_hours = (time[2]-time[1]).total_seconds()/3600.0
+
+elif id[1] == 'synthetic':
+
+    ss = data['SS']
+    at = data['AT_t']
+    mmsl = data['MMSL_t']/1000.0 # to meters
+    hs = data['HS']
+    tp = data['TP']
+    bmus = data['BMUS']
+
+    # d_ini= np.datetime64('0001-01-01 00:00')
+    # #d_end = np.datetime64('9961-01-05 23:00')
+    # d_end = np.datetime64('0001-12-31 23:00')
+    # time = np.arange(d_ini, d_end + np.timedelta64(1,'h'), dtype='datetime64[h]')
+    # dt_hours = (time[2]-time[1])
+    # dt_hours = dt_hours / np.timedelta64(1, 'h')
+
+    d_ini= np.datetime64('0001-01-01 00:00').astype(datetime)
+    d_end = np.datetime64('9961-01-06 00:00').astype(datetime)
+    # d_end = np.datetime64('0002-01-01 00:00').astype(datetime)
+    time = [d_ini + timedelta(hours=i) for i in range((d_end-d_ini).days * 24)]
+    dt_hours = (time[2]-time[1]).total_seconds()/3600.0
 
 
 #---------------------------------------------------------
 # 1) Obtain TWL
 runup2 = Runup(hs, tp)
 
-# Offshore: Atmospheric Induced Water level proxy
-twl = runup2 + ss  # TWL = AWL
+if id[0] == 'offshore':
+    # Offshore: Atmospheric Induced Water level proxy
+    twl = runup2 + ss  # TWL = AWL
 
-## At the coast: TWL proxy
-#twl = twl + at + mmsl
-#---------------------------------------------------------
+elif id[0] == 'nearshore':
+    # At the coast: TWL proxy
+    twl = runup2 + ss + at + mmsl
 
 
 fig, ax1 = plt.subplots()
@@ -81,6 +127,8 @@ twl_max = []
 area = []
 durac = []
 for ind_i, ind_f in zip(ind_ini, ind_fin):
+
+    print('select max from consecutive peaks ', ind_i, '/', ind_fin[-1])
 
     twl_temp = np.max(twl[ind_i:ind_f])
     twl_max.append(twl_temp)
@@ -131,6 +179,8 @@ area_indep = []
 ind_delete = []
 for ind_i, ind_f in zip(ind_ini, ind_fin):
 
+    print('keep independent max ', ind_i, '/', ind_fin[-1])
+
     twl_temp = np.max(twl_max[ind_i:ind_f])
     twl_max_indep.append(twl_temp)
 
@@ -164,26 +214,53 @@ durac = np.concatenate((durac, durac_indep))
 durac = [tt.total_seconds()/3600 for tt in durac] # to hours
 area = np.concatenate((area, area_indep))
 
+
+#---------------------------------------------------------
 # sort data
 out = pd.DataFrame({'time': time_max, 'twl': twl_max, 'twl_exceedances': twl_max-twl_threshold, 'duration': durac, 'area': area})
 out = out.set_index('time')
 
 out.sort_index(inplace=True)
 
+
+#---------------------------------------------------------
+# Add the value of the correspondent bmus
+temp = pd.DataFrame({'time': time, 'bmus': bmus})
+temp = temp.set_index('time')
+
+bmus_twl_max = []
+for t in out.index:
+
+    bmus_twl_max.append(temp['bmus'].loc[t])
+
+out['bmus'] = bmus_twl_max
+
+
+#---------------------------------------------------------
 # save
 nc = out.to_xarray()
-nc.to_netcdf('/Users/albacid/Projects/SERDP/twl_POT.nc')
 
+p_ncfile = '/Users/albacid/Projects/SERDP/twl_POT_' + id[0] + '_' + id[1] + '.nc'
+StoreBugXdset(nc, p_ncfile)
+
+
+#---------------------------------------------------------
+print('mean extreme events:', np.mean(out.twl[:]), '(m)')
+print('max of extreme events:', np.max(out.twl[:]), '(m)')
+print()
 print('mean duration of extreme events:', np.mean(out.duration[:]), '(h)')
 print('max duration of extreme events:', np.max(out.duration[:]), '(h)')
 print()
-n_years = data['dates'][-1][0] - data['dates'][0][0] + 1
 print('mean area of extreme events:', np.mean(out.area[:]), '(m*h)')
 print('max area of extreme events:', np.max(out.area[:]), '(m*h)')
 print()
-print('number of extreme events', len(out.twl))
+print('number of extreme events:', len(out.twl))
+n_years = (time[-1] - time[0]).total_seconds() / (3600*24*365.25)
 print('approximately ', round(len(twl_max)/n_years,1), 'events/yr')
 
+
+#---------------------------------------------------------
+# Save fig
 
 # plot
 ax1.plot(out['twl'], '.b', label='twl max indep')
@@ -199,7 +276,8 @@ ax2.set_ylabel('area (m*h)',fontdict=dict(weight='bold'))
 
 ax1.set_xlim('1981-02-01','1981-03-01')
 
-ax1.legend()
-ax2.legend()
+ax1.legend(fontsize=7)
+ax2.legend(fontsize=7)
 
 #plt.show()
+plt.savefig('/Users/albacid/Projects/SERDP/twl_POT_' + id[0] + '_' + id[1] + '.png', dpi=600)
