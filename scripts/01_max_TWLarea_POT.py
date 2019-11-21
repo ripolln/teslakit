@@ -24,21 +24,20 @@ rutin = '/Users/albacid/Projects/SERDP/results_files/'
 #----------------------------------------------------------------
 # OFFSHORE
 
-# # 3-hourly historical offshore values (GOW data):
-# id = ['offshore', 'historical']
-# matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
+# 3-hourly historical offshore values (GOW data):
+id = ['offshore', 'historical']
+matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
 
-# hourly simulated offshore values (output teslakit):
-id = ['offshore', 'synthetic']
-matfile = rutin + 'Simulados/Hourly_100000years_Hs_Tp_Dir_Level_v2.mat'
+# # # hourly simulated offshore values (output teslakit):
+# id = ['offshore', 'synthetic']
+# matfile = rutin + 'Simulados/Hourly_100000years_Hs_Tp_Dir_Level_v2.mat'
 
 #----------------
 # NEARSHORE
 
-# # 3-hourly historical reconstructed values:
-# id = ['nearshore', 'historical']
-# matfile = rutin + 'Historicos/Reconstr_Hs_Tp_Dir_Level_NOtransectRoi_Historical_2016_p6.mat'
-
+# 3-hourly historical reconstructed values:
+#id = ['nearshore', 'historical']
+#matfile = rutin + 'Historicos/Reconstr_Hs_Tp_Dir_Level_NOtransectRoi_Historical_2016_p6.mat'
 
 # # hourly simulated reconstructed values:
 # id = ['nearshore', 'synthetic']
@@ -50,38 +49,56 @@ matfile = rutin + 'Simulados/Hourly_100000years_Hs_Tp_Dir_Level_v2.mat'
 # Load data
 data = ReadMatfile(matfile)
 
-if id[1] == 'historical':
-    ss = data['ss']
-    at = data['at']
-    mmsl = data['mmsl']/1000.0 # to meters??
-    hs = data['hs']
-    tp = data['tp']
-    bmus = data['bmus']
+if id[0] == 'offshore':
+    if id[1] == 'historical':
+        ss = data['ss']
+        at = data['at']
+        mmsl = data['mmsl']/1000.0 # to meters??
+        hs = data['hs']
+        tp = data['tp']
+        bmus = data['bmus']
 
-    time = DateConverter_Mat2Py(data['time'])
+        time = DateConverter_Mat2Py(data['time'])
+        dt_hours = (time[2]-time[1]).total_seconds()/3600.0
+
+
+    elif id[1] == 'synthetic':
+
+        ss = data['SS']
+        at = data['AT_t']
+        mmsl = data['MMSL_t']/1000.0 # to meters
+        hs = data['HS']
+        tp = data['TP']
+        bmus = data['BMUS']
+
+        # d_ini= np.datetime64('0001-01-01 00:00')
+        # #d_end = np.datetime64('9961-01-05 23:00')
+        # time = np.arange(d_ini, d_end + np.timedelta64(1,'h'), dtype='datetime64[h]')
+        # dt_hours = (time[2]-time[1])
+        # dt_hours = dt_hours / np.timedelta64(1, 'h')
+
+        d_ini= np.datetime64('0001-01-01 00:00').astype(datetime)
+        d_end = np.datetime64('9961-01-06 00:00').astype(datetime)
+        time = [d_ini + timedelta(hours=i) for i in range((d_end-d_ini).days * 24)]
+        dt_hours = (time[2]-time[1]).total_seconds()/3600.0
+
+elif id[0] == 'nearshore':
+
+    # Hs, Tp, Dir, SL(incluye AT, MMSL y SS)
+    hs = data['results'][:,0]
+    tp = data['results'][:,1]
+    dir = data['results'][:,2]
+    sl = data['results'][:,3]
+
+
+    d_ini= np.datetime64('1979-01-01 00:00').astype(datetime)
+    d_end = np.datetime64('2016-12-31 00:00').astype(datetime)
+
+    time = [d_ini + timedelta(hours=i) for i in range(0, (d_end-d_ini).days * 24 +1, 3)]
     dt_hours = (time[2]-time[1]).total_seconds()/3600.0
 
-elif id[1] == 'synthetic':
+    # waterdepth_NO = data['waterdepth_NO']
 
-    ss = data['SS']
-    at = data['AT_t']
-    mmsl = data['MMSL_t']/1000.0 # to meters
-    hs = data['HS']
-    tp = data['TP']
-    bmus = data['BMUS']
-
-    # d_ini= np.datetime64('0001-01-01 00:00')
-    # #d_end = np.datetime64('9961-01-05 23:00')
-    # d_end = np.datetime64('0001-12-31 23:00')
-    # time = np.arange(d_ini, d_end + np.timedelta64(1,'h'), dtype='datetime64[h]')
-    # dt_hours = (time[2]-time[1])
-    # dt_hours = dt_hours / np.timedelta64(1, 'h')
-
-    d_ini= np.datetime64('0001-01-01 00:00').astype(datetime)
-    d_end = np.datetime64('9961-01-06 00:00').astype(datetime)
-    # d_end = np.datetime64('0002-01-01 00:00').astype(datetime)
-    time = [d_ini + timedelta(hours=i) for i in range((d_end-d_ini).days * 24)]
-    dt_hours = (time[2]-time[1]).total_seconds()/3600.0
 
 
 #---------------------------------------------------------
@@ -90,12 +107,12 @@ runup2 = Runup(hs, tp)
 
 if id[0] == 'offshore':
     # Offshore: Atmospheric Induced Water level proxy
-    twl = runup2 + ss  # TWL = AWL
+    twl = runup2# + ss  # TWL = AWL
 
 elif id[0] == 'nearshore':
     # At the coast: TWL proxy
-    twl = runup2 + ss + at + mmsl
-
+    # twl = runup2 + ss + at + mmsl
+    twl = runup2 + sl
 
 fig, ax1 = plt.subplots()
 ax1.plot(time, twl, label='twl')
@@ -105,6 +122,10 @@ ax1.plot(time, twl, label='twl')
 # 2) Obtain threshold value
 percentile = 99
 twl_threshold = np.percentile (twl, percentile)
+
+if id[1] == 'synthetic':
+    twl_threshold = 1.38 # threshold del historico offshore
+
 print('twl threshold (m): ', round(twl_threshold,2))
 print()
 
@@ -168,8 +189,14 @@ ind_dif = np.diff(ind_window_mask)
 # mover los valores una posicion a la derecha (insertar un 0 en la posición 0)
 ind_dif = np.insert(ind_dif, 0, 0)
 
+# arreglar en caso de que el primer evento ya sea dependiente
+if ind_dif[1] == -1:
+    ind_dif[0] = 1
+
+
 ind_ini = np.where(ind_dif == 1)[0]
 ind_fin = np.where(ind_dif == -1)[0] +1
+
 
 # Keep maximum of dependent events
 time_max_indep = []
@@ -243,6 +270,7 @@ nc = out.to_xarray()
 p_ncfile = '/Users/albacid/Projects/SERDP/twl_POT_' + id[0] + '_' + id[1] + '.nc'
 StoreBugXdset(nc, p_ncfile)
 
+sys.exit()
 
 #---------------------------------------------------------
 print('mean extreme events:', np.mean(out.twl[:]), '(m)')
@@ -280,4 +308,4 @@ ax1.legend(fontsize=7)
 ax2.legend(fontsize=7)
 
 #plt.show()
-plt.savefig('/Users/albacid/Projects/SERDP/twl_POT_' + id[0] + '_' + id[1] + '.png', dpi=600)
+plt.savefig('/Users/albacid/Projects/SERDP/twl_POT_noSS_' + id[0] + '_' + id[1] + '.png', dpi=600)

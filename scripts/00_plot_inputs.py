@@ -22,9 +22,9 @@ rutin = '/Users/albacid/Projects/SERDP/results_files/'
 #----------------------------------------------------------------
 # OFFSHORE
 
-# # 3-hourly historical offshore values (GOW data):
-# id = ['offshore', 'historical']
-# matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
+# 3-hourly historical offshore values (GOW data):
+#id = ['offshore', 'historical']
+#matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
 
 # hourly simulated offshore values (output teslakit):
 id = ['offshore', 'synthetic']
@@ -90,7 +90,7 @@ runup2 = Runup(hs, tp)
 
 if id[0] == 'offshore':
     # Offshore: Atmospheric Induced Water level proxy
-    twl = runup2 + ss  # TWL = AWL
+    twl = runup2# + ss  # TWL = AWL
 
 elif id[0] == 'nearshore':
     # At the coast: TWL proxy
@@ -99,8 +99,10 @@ elif id[0] == 'nearshore':
 
 fig, ax1 = plt.subplots()
 ax1.plot(time, twl)
-ax1.plot([time[0], time[-1]], [0.97, 0.97])
+#ax1.plot([time[0], time[-1]], [0.97, 0.97])
 ax1.set_ylabel('twl ' + id[0])
-plt.show()
-sys.exit()
-plt.savefig('/Users/albacid/Projects/SERDP/inputdata_twl_' + id[0] + '_' + id[1] + '.png', dpi=300)
+ax1.set_xlim([0,324342])
+ax1.set_ylim([-.1,2])
+#plt.show()
+#sys.exit()
+plt.savefig('/Users/albacid/Projects/SERDP/inputdata_twl_noSS_' + id[0] + '_' + id[1] + '.png', dpi=300)
