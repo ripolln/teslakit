@@ -18,9 +18,9 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # teslakit
 from ..util.operations import GetBestRowsCols
-from ..custom_dateutils import xds_reindex_daily as xr_daily
-from ..custom_dateutils import xds_common_dates_daily as xcd_daily
-from ..custom_dateutils import get_years_months_days
+from ..util.time_operations import xds_reindex_daily as xr_daily
+from ..util.time_operations import xds_common_dates_daily as xcd_daily
+from ..util.time_operations import get_years_months_days
 from ..kma import ClusterProbabilities
 from .custom_colors import colors_awt
 from .pcs import axplot_PC_hist, axplot_PCs_3D
@@ -188,6 +188,7 @@ def Plot_AWT_Validation_Cluster(AWT_2D, AWT_num_wts, AWT_ID, AWT_dates,
 
     # show
     if show: plt.show()
+    return fig
 
 def Plot_AWTs_Validation(bmus, dates, Km, n_clusters, lon, d_PCs_fit,
                          d_PCs_rnd, show=True):

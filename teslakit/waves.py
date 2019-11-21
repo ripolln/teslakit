@@ -3,10 +3,10 @@
 
 import numpy as np
 import xarray as xr
+from datetime import datetime, timedelta
 
 # tk
-from teslakit.custom_dateutils import get_years_months_days, npdt64todatetime
-from datetime import datetime, timedelta
+from .util.time_operations import get_years_months_days, npdt64todatetime
 
 # hide numpy warnings
 np.warnings.filterwarnings('ignore')
@@ -67,12 +67,17 @@ def GetDistribution(xds_wps, swell_sectors):
     )
 
     # prepare output array
-    xds_parts = xr.Dataset({
-        'sea_Hs':('time',sea_Hs),
-        'sea_Tp':('time',sea_Tp),
-        'sea_Dir':('time',sea_Dir)
-    },
-        coords = {'time':time}
+    xds_fams = xr.Dataset(
+        {
+            'Hs': ('time', xds_wps.hs.values[:]),
+            'Tp': ('time', xds_wps.tp.values[:]),
+            'Dir': ('time', xds_wps.dir.values[:]),
+
+            'sea_Hs': ('time', sea_Hs),
+            'sea_Tp': ('time', sea_Tp),
+            'sea_Dir': ('time', sea_Dir),
+        },
+        coords = {'time': time}
     )
 
     # solve sectors
@@ -125,12 +130,12 @@ def GetDistribution(xds_wps, swell_sectors):
         swell_Dir[p_fix] = np.nan
 
         # append data to partitons dataset
-        xds_parts['swell_{0}_Hs'.format(c)] = ('time', swell_Hs)
-        xds_parts['swell_{0}_Tp'.format(c)] = ('time', swell_Tp)
-        xds_parts['swell_{0}_Dir'.format(c)] = ('time', swell_Dir)
+        xds_fams['swell_{0}_Hs'.format(c)] = ('time', swell_Hs)
+        xds_fams['swell_{0}_Tp'.format(c)] = ('time', swell_Tp)
+        xds_fams['swell_{0}_Dir'.format(c)] = ('time', swell_Dir)
         c+=1
 
-    return xds_parts
+    return xds_fams
 
 def GetDistribution_ws(xds_wps, swell_sectors):
     '''
@@ -301,11 +306,19 @@ def Aggregate_WavesFamilies(wvs_fams):
     vs_Hs = [x for x in vs if x.endswith('_Hs')]
     vs_Tp = [x for x in vs if x.endswith('_Tp')]
     vs_Dir = [x for x in vs if x.endswith('_Dir')]
+    times = wvs_fams.time.values[:]
 
     # join variable values
     vv_Hs = np.column_stack([wvs_fams[v].values[:] for v in vs_Hs])
     vv_Tp = np.column_stack([wvs_fams[v].values[:] for v in vs_Tp])
     vv_Dir = np.column_stack([wvs_fams[v].values[:] for v in vs_Dir])
+
+    # TODO: entire row nan?
+    #p_rn = np.where([x.all() for x in np.isnan(vv_Hs)])[0]
+    #vv_Hs = vv_Hs[~p_rn]
+    #vv_Tp = vv_Tp[~p_rn]
+    #vv_Dir = vv_Dir[~p_rn]
+    #times = wvs_fams.time.values[~p_rn]
 
     # Hs from families
     HS = np.sqrt(np.nansum(np.power(vv_Hs,2), axis=1))
@@ -340,7 +353,7 @@ def Aggregate_WavesFamilies(wvs_fams):
             'Dir': (('time',), DIR),
         },
         coords = {
-            'time': wvs_fams.time.values[:]  # get time from input
+            'time': times,  # get time from input
         }
     )
 

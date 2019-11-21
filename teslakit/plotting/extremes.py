@@ -11,13 +11,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scipy.interpolate import interp1d
+from scipy.stats import  gumbel_l, genextreme
 
 # import constants
 from .config import _faspect, _fsize, _fdpi
 
 # TODO: REFACTOR CHROM Y SIGMA
 
-def Plot_GEVParams(xda_gev_var, p_export=None):
+def Plot_GEVParams(xda_gev_var, show=True):
     'Plot GEV params for a GEV parameter variable (sea_Hs, swell_1_Hs, ...)'
 
     name = xda_gev_var.name
@@ -34,8 +35,6 @@ def Plot_GEVParams(xda_gev_var, p_export=None):
 
     # empty last axis
     axs[3].axis('off')
-    axs[3].text(0, 0.9, 'GEV parameters: {0}'.format(name),
-                fontsize=20, fontweight='bold')
 
     for c, par in enumerate(params):
         ax = axs[c]
@@ -48,23 +47,24 @@ def Plot_GEVParams(xda_gev_var, p_export=None):
         else:
             cl = (np.min(par_values), np.max(par_values))
 
-        ax.pcolor(rr_pv, cmap='coolwarm_r', clim=cl)
+        cc=ax.pcolor(rr_pv, cmap='coolwarm_r', clim=cl, edgecolor='k')
+        fig.colorbar(cc, ax=ax)
 
         # add grid and title
-        ax.set_title(par, fontweight='bold')
-        ax.grid(True, which='major', axis='both', linestyle='-', color='k')
+        ax.set_title(par)
         ax.set_xticklabels([])
         ax.set_yticklabels([])
+        ax.set_xticks([])
+        ax.set_yticks([])
 
-    # show / export
-    if not p_export:
-        plt.show()
+    ttl = 'GEV - {0}'.format(name)
+    fig.suptitle(ttl, fontweight='bold', fontsize=14)
 
-    else:
-        fig.savefig(p_export, dpi=_fdpi)
-        plt.close()
+    # show
+    if show: plt.show()
+    return fig
 
-def Plot_ChromosomesProbs(xds_chrom, p_export=None):
+def Plot_ChromosomesProbs(xds_chrom, show=True):
     'Plot chromosomes probabilities for each WT using chrom triangles'
 
     # TODO: colores poco fuertes
@@ -137,18 +137,14 @@ def Plot_ChromosomesProbs(xds_chrom, p_export=None):
         ax.axis('off')
         #ax.set_title('WT: {0}'.format(c_wt+1))
 
-        fig.suptitle('Chromosomes Probabilities - WTs')
+        ttl = 'Chromosomes Probabilities - WTs'
+        fig.suptitle(ttl, fontweight='bold', fontsize=14)
 
+    # show
+    if show: plt.show()
+    return fig
 
-    # show / export
-    if not p_export:
-        plt.show()
-
-    else:
-        fig.savefig(p_export, dpi=128)
-        plt.close()
-
-def Plot_SigmaCorrelation(xds_chrom, d_sigma, p_export=None):
+def Plot_SigmaCorrelation(xds_chrom, d_sigma, show=True):
     'Plot sigma correlation (Hs1-Hs2, Hs1-Tp1) for each WT using chrom triangles'
 
     # Get sigma correlation values for plot
@@ -244,32 +240,104 @@ def Plot_SigmaCorrelation(xds_chrom, d_sigma, p_export=None):
         ax.axis('off')
         #ax.set_title('WT: {0}'.format(c_wt+1))
 
-        fig.suptitle('Sigma Correlation - WTs')
+        ttl = 'Sigma Correlation - WTs'
+        fig.suptitle(ttl, fontweight='bold', fontsize=14)
 
-    # show / export
-    if not p_export:
-        plt.show()
-
-    else:
-        fig.savefig(p_export, dpi=_fdpi)
-        plt.close()
+    # show
+    if show: plt.show()
+    return fig
 
 def Plot_Schemaball(xds_data):
     # TODO
     return None
 
-def Plot_ReturnPeriodValidation(xds_hist, xds_sim, var_name, p_export=None):
+
+def axplot_RP(ax, t_h, v_h, tg_h, vg_h, t_s, v_s, var_name):
+    'axes plot return period historical vs simulation'
+
+    # historical maxima
+    ax.semilogx(
+        t_h, v_h, 'ok',
+        markersize = 3, label = 'Historical Annual Maxima',
+    )
+
+    # historical GEV fit
+    ax.semilogx(
+        tg_h, vg_h, '-b',
+        label = 'Historical Annual Maxima - GEV Fit',
+    )
+
+    # simulation maxima
+    ax.semilogx(
+        t_s, v_s, '-r',
+        linewidth = 2, label = 'Simulation Annual Maxima',
+    )
+
+    # TODO simulation 95 percentile 
+
+
+    # customize axs
+    ax.legend(loc='lower right')
+    #ax.set_title('', fontweight='bold')
+    ax.set_xlabel('Return Period (years)')
+    ax.set_ylabel('{0}'.format(var_name))
+    ax.set_xlim(left=10**0, right=np.max(np.concatenate([t_h,t_s])))
+    ax.tick_params(axis='both', which='both', top=True, right=True)
+    ax.grid(which='both')
+
+def Plot_ReturnPeriodValidation(xds_hist, xds_sim, var_name, show=True):
     'Plot Return Period historical - simulation validation'
-    # TODO
-    pass
 
-    fig, axs = plt.subplots(111, figsize=(_faspect*_fsize, _fsize))
+    # aux func for calculating rp time
+    def t_rp(time_y):
+        ny = len(time_y)
+        return np.array([1/(1-(n/(ny+1))) for n in np.arange(1,ny+1)])
 
-    # show / export
-    if not p_export:
-        plt.show()
+    # aux func for gev fit
+    def gev_fit(var_fit):
+        c = -0.1
+        vv = np.linspace(0,10,200)
 
-    else:
-        fig.savefig(p_export, dpi=_fdpi)
-        plt.close()
+        sha_g, loc_g, sca_g =  genextreme.fit(var_fit, c)
+        pg = genextreme.cdf(vv, sha_g, loc_g, sca_g)
 
+        ix = pg > 0.1
+        vv = vv[ix]
+        ts = 1/(1 - pg[ix])
+
+        # TODO gev params 95% confidence intervals
+
+        return ts, vv
+
+    # RP calculation, var sorting historical
+    t_h = t_rp(xds_hist.time.values[:])
+    v_h = np.sort(xds_hist[var_name].values[:])
+
+    # GEV fit historical
+    tg_h, vg_h = gev_fit(v_h)
+
+    # RP calculation, var sorting simulation
+    t_s = t_rp(xds_sim.time.values[:])
+    v_s = np.sort(xds_sim[var_name].values[:])
+
+    # TODO sim percentile 95%
+    #fil = np.concatenate(
+    #    [
+    #        np.percentile(v_s, 97.5, interpolation='midpoint'),
+    #        np.fliplr(np.percentile(v_s, 2.5, interpolation='midpoint'))
+    #    ]
+    #)
+
+    # figure
+    fig, axs = plt.subplots(figsize=(_faspect*_fsize, _fsize))
+
+    axplot_RP(
+        axs,
+        t_h, v_h, tg_h, vg_h,
+        t_s, v_s,
+        var_name,
+    )
+
+    # show and return figure
+    if show: plt.show()
+    return fig

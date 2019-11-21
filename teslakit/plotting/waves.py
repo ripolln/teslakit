@@ -67,7 +67,7 @@ def axplot_histcompare(ax, var_fit, var_sim, fam_color, n_bins):
     #ax.set_yticks([])
 
 
-def Plot_Waves_DWTs(xds_wvs_fams_sel, bmus, n_clusters, p_export=None):
+def Plot_Waves_DWTs(xds_wvs_fams_sel, bmus, n_clusters, show=True):
     '''
     Plot waves families by DWT
 
@@ -90,6 +90,7 @@ def Plot_Waves_DWTs(xds_wvs_fams_sel, bmus, n_clusters, p_export=None):
     n_rows, n_cols = GetBestRowsCols(n_clusters)
 
     # Hs and Tp
+    l_figs = []
     for wv in ['Hs', 'Tp']:
 
         # get common xlims for histogram
@@ -137,15 +138,10 @@ def Plot_Waves_DWTs(xds_wvs_fams_sel, bmus, n_clusters, p_export=None):
         fig.suptitle(
             '{0} Distributions: {1}'.format(wv, ', '.join(n_fams)),
             fontsize=14, fontweight = 'bold')
+        l_figs.append(fig)
 
-        # show / export
-        if not p_export:
-            plt.show()
-        else:
-            nme = 'wvs_fams_{0}.png'.format(wv)
-            p_e = op.join(p_export, nme)
-            fig.savefig(p_e, dpi=_fdpi)
-            plt.close()
+        # show 
+        if show: plt.show()
 
     # Dir    
     fig = plt.figure(figsize=(_faspect*_fsize, _fsize))
@@ -189,16 +185,14 @@ def Plot_Waves_DWTs(xds_wvs_fams_sel, bmus, n_clusters, p_export=None):
         '{0} Distributions: {1}'.format('Dir', ', '.join(n_fams)),
         fontsize=14, fontweight='bold')
 
-    # show / export
-    if not p_export:
-        plt.show()
-    else:
-        nme = 'wvs_fams_dir_DWTs.png'
-        p_e = op.join(p_export, nme)
-        fig.savefig(p_e, dpi=_fdpi)
-        plt.close()
+    l_figs.append(fig)
 
-def Plot_Waves_Histogram_FitSim(wvs_fams_hist, wvs_fams_sim, vns=['Hs', 'Tp', 'Dir'], p_export=None):
+    # show 
+    if show: plt.show()
+    return l_figs
+
+def Plot_Waves_Histogram_FitSim(wvs_fams_hist, wvs_fams_sim,
+                                vns=['Hs', 'Tp','Dir'], show=True):
     '''
     Plot waves families histogram fitting - simulation comparison
 
@@ -235,7 +229,7 @@ def Plot_Waves_Histogram_FitSim(wvs_fams_hist, wvs_fams_sim, vns=['Hs', 'Tp', 'D
             vf = wvs_fams_hist['{0}_{1}'.format(nf, nv)].values[:]
             vs = wvs_fams_sim['{0}_{1}'.format(nf, nv)].values[:]
 
-            # remove nans
+            # remove nans (chromosomes off)
             vf = vf[~np.isnan(vf)]
             vs = vs[~np.isnan(vs)]
 
@@ -247,18 +241,18 @@ def Plot_Waves_Histogram_FitSim(wvs_fams_hist, wvs_fams_sim, vns=['Hs', 'Tp', 'D
             axplot_histcompare(ax, vf, vs, fc, n_bins)
 
             # first row titles
-            if nv == vns[0]:
+            if gr == 0:
                 ax.set_title(nf, fontweight='bold')
+            # first column variables
+            if gc == 0:
+                ax.set_ylabel(nv, fontweight='bold')
 
     fig.suptitle(
         'Historical - Simulation Waves Families Comparison',
         fontsize=14, fontweight = 'bold'
     )
 
-    # show / export
-    if not p_export:
-        plt.show()
-    else:
-        fig.savefig(p_export, dpi=_fdpi)
-        plt.close()
+    # show and return figure
+    if show: plt.show()
+    return fig
 

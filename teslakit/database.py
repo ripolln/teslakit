@@ -7,6 +7,7 @@ import os.path as op
 import configparser
 from shutil import copyfile
 import pickle
+from datetime import timedelta
 
 # pip
 from prettytable import PrettyTable
@@ -18,9 +19,10 @@ from .io.getinfo import description
 from .io.aux_nc import StoreBugXdset
 from .io.matlab import ReadTCsSimulations, ReadMatfile, ReadNakajoMats, \
 ReadGowMat, ReadCoastMat, ReadEstelaMat
-from .custom_dateutils import xds_reindex_daily
-from .custom_dateutils import xds_reindex_monthly
-from .custom_dateutils import xds_common_dates_daily as xcd_daily
+
+from .util.time_operations import xds_reindex_daily, xds_reindex_monthly, \
+xds_limit_dates, xds_common_dates_daily, fast_reindex_hourly, \
+generate_datetimes
 
 
 def clean_files(l_files):
@@ -272,37 +274,12 @@ class Database(object):
     def Load_WAVES_partitions_nc(self):
         return xr.open_dataset(self.paths.site.WAVES.partitions_p1)
 
-    def Load_WAVES_fams(self):
-        return xr.open_dataset(self.paths.site.WAVES.families)
+    def Save_WAVES_hist(self, xds):
+        clean_files([self.paths.site.WAVES.hist])
+        xds.to_netcdf(self.paths.site.WAVES.hist, 'w')
 
-    def Load_WAVES_fams_noTCs(self):
-        return xr.open_dataset(self.paths.site.WAVES.families_notcs)
-
-    def Save_WAVES_fams(self, xds_fams):
-        xds_fams.to_netcdf(self.paths.site.WAVES.families, 'w')
-
-    def Save_WAVES_ptsfams_noTCs(self, xds_pts, xds_fams):
-        xds_pts.to_netcdf(self.paths.site.WAVES.partitions_notcs, 'w')
-        xds_fams.to_netcdf(self.paths.site.WAVES.families_notcs, 'w')
-
-    def Save_WAVES_fams_TCs_categ(self, d_fams):
-
-        p_fams = self.paths.site.WAVES.families_tcs_categ
-
-        if not op.isdir(p_fams): os.makedirs(p_fams)
-        for k in d_fams.keys():
-            p_s = op.join(p_fams, 'waves_fams_cat{0}.nc'.format(k))
-            d_fams[k].to_netcdf(p_s, 'w')
-
-    def Load_WAVES_fams_TCs_categ(self):
-
-        p_fams = self.paths.site.WAVES.families_tcs_categ
-
-        d_WT_TCs_wvs = {}
-        for k in range(6):
-            p_s = op.join(p_fams, 'waves_fams_cat{0}.nc'.format(k))
-            d_WT_TCs_wvs['{0}'.format(k)] = xr.open_dataset(p_s)
-        return d_WT_TCs_wvs
+    def Load_WAVES_hist(self):
+        return xr.open_dataset(self.paths.site.WAVES.hist)
 
     # ESTELA
 
@@ -312,8 +289,8 @@ class Database(object):
     def Load_ESTELA_data(self):
         return ReadEstelaMat(self.paths.site.ESTELA.estelamat)
 
-    def Load_ESTELA_waves(self):
-        return ReadGowMat(self.paths.site.ESTELA.gowpoint)
+    #def Load_ESTELA_waves(self):
+    #    return ReadGowMat(self.paths.site.ESTELA.gowpoint)
 
     def Load_ESTELA_waves_np(self):
         npzfile = np.load(self.paths.site.ESTELA.gowpoint)
@@ -378,22 +355,20 @@ class Database(object):
 
     def Load_TIDE_sim_astro(self):
         xds = xr.open_dataset(self.paths.site.TIDE.sim_astro)
+
+        # manual fix problems with hourly time
+        d1 = xds.time.values[0]
+        d2 = d1 + timedelta(hours=len(xds.time.values[:])-1)
+        time_fix =  generate_datetimes(d1, d2, 'datetime64[h]')
+        xds['time'] = time_fix
+
         return xds
 
     def Save_TIDE_sim_mmsl(self, xds):
-        # monthly
         StoreBugXdset(xds, self.paths.site.TIDE.sim_mmsl)
-
-        # hourly
-        xds_h = xds.resample(time='1H').pad()
-        StoreBugXdset(xds_h, self.paths.site.TIDE.sim_mmsl_h)
 
     def Load_TIDE_sim_mmsl(self):
         xds = xr.open_dataset(self.paths.site.TIDE.sim_mmsl)
-        return xds
-
-    def Load_TIDE_sim_mmsl_h(self):
-        xds = xr.open_dataset(self.paths.site.TIDE.sim_mmsl_h)
         return xds
 
     def Load_TIDE_mareografo(self):
@@ -404,7 +379,80 @@ class Database(object):
         xds['tide'] = xds['tide'] * 1000
         return xds
 
-    # SPECIAL
+    # COMPLETE DATA 
+
+    def Load_SIM_Covariates(self, n_sim_awt=0, n_sim_mjo=0, n_sim_dwt=0,
+                            regenerate=False):
+        '''
+        Load all simulated covariates (hourly): AWTs, DWTs, MJO, MMSL, AT
+
+        regenerate  - forces hourly dataset regeneration
+        '''
+
+        # TODO ignorar los archivos que no existan / elegirlos en args
+
+        pf = self.paths.site.SIMULATION.covariates_hourly
+
+        if not op.isfile(pf) or regenerate:
+            xds = self.Generate_SIM_Covariates(n_sim_awt, n_sim_mjo,n_sim_dwt)
+            StoreBugXdset(xds, pf)
+
+        else:
+            xds = xr.open_dataset(pf)
+
+        return xds
+
+    def Generate_SIM_Covariates(self, n_sim_awt=0, n_sim_mjo=0, n_sim_dwt=0):
+
+        # load data
+        AWT = self.Load_SST_AWT_sim()
+        MSL = self.Load_TIDE_sim_mmsl()
+        MJO = self.Load_MJO_sim()
+        DWT = self.Load_ESTELA_DWT_sim()
+        ATD_h = self.Load_TIDE_sim_astro()  # hourly data, 1 sim
+
+        # select n_sim
+        AWT = AWT.isel(n_sim=n_sim_awt)
+        MSL = MSL.isel(n_sim=n_sim_awt)
+        MJO = MJO.isel(n_sim=n_sim_mjo)
+        DWT = DWT.isel(n_sim=n_sim_dwt)
+
+        # reindex data to hourly (pad)
+        AWT_h = fast_reindex_hourly(AWT)
+        MSL_h = fast_reindex_hourly(MSL)
+        MJO_h = fast_reindex_hourly(MJO)
+        DWT_h = fast_reindex_hourly(DWT)
+
+        # common dates limits
+        d1, d2 = xds_limit_dates([AWT_h, ATD_h, MSL_h, MJO_h, DWT_h, ATD_h])
+        AWT_h = AWT_h.sel(time = slice(d1,d2))
+        MSL_h = MSL_h.sel(time = slice(d1,d2))
+        MJO_h = MJO_h.sel(time = slice(d1,d2))
+        DWT_h = DWT_h.sel(time = slice(d1,d2))
+        ATD_h = ATD_h.sel(time = slice(d1,d2))
+
+        # copy to new dataset
+        times = AWT_h.time.values[:]
+        xds = xr.Dataset(
+            {
+                'AWT': (('time',), AWT_h.evbmus_sims.values[:].astype(int)),
+                'MJO': (('time',), MJO_h.evbmus_sims.values[:].astype(int)),
+                'DWT': (('time',), DWT_h.evbmus_sims.values[:].astype(int)),
+                'MMSL': (('time',), MSL_h.mmsl.values[:]),
+                'AT': (('time',), ATD_h.tide.values[:]),
+            },
+            coords = {'time': times}
+        )
+
+        return xds
+
+    def Save_SIM_Complete(self, xds):
+        StoreBugXdset(xds, self.paths.site.SIMULATION.complete_hourly)
+
+    def Load_SIM_Complete(self):
+        return xr.open_dataset(self.paths.site.SIMULATION.complete_hourly)
+
+    # SPECIAL PLOTS
 
     def Load_AWTs_DWTs_Plots_sim(self, n_sim=0):
         'Load data needed for WT-WT Probs plot'
@@ -429,7 +477,7 @@ class Database(object):
         xds_AWT = xds_reindex_daily(xds_AWT)
 
         # get common dates
-        dc = xcd_daily([xds_AWT, xds_DWT])
+        dc = xds_common_dates_daily([xds_AWT, xds_DWT])
         xds_DWT = xds_DWT.sel(time=slice(dc[0], dc[-1]))
         xds_AWT = xds_AWT.sel(time=slice(dc[0], dc[-1]))
 
@@ -458,7 +506,7 @@ class Database(object):
         xds_AWT = xds_reindex_daily(xds_AWT)
 
         # get common dates
-        dc = xcd_daily([xds_AWT, xds_DWT])
+        dc = xds_common_dates_daily([xds_AWT, xds_DWT])
         xds_DWT = xds_DWT.sel(time=slice(dc[0], dc[-1]))
         xds_AWT = xds_AWT.sel(time=slice(dc[0], dc[-1]))
 
@@ -481,7 +529,7 @@ class Database(object):
         )
 
         # get common dates
-        dc = xcd_daily([xds_DWT, xds_MJO])
+        dc = xds_common_dates_daily([xds_DWT, xds_MJO])
         xds_DWT = xds_DWT.sel(time=slice(dc[0], dc[-1]))
         xds_MJO = xds_MJO.sel(time=slice(dc[0], dc[-1]))
 
@@ -501,7 +549,7 @@ class Database(object):
         )
 
         # get common dates
-        dc = xcd_daily([xds_DWT, xds_MJO])
+        dc = xds_common_dates_daily([xds_DWT, xds_MJO])
         xds_DWT = xds_DWT.sel(time=slice(dc[0], dc[-1]))
         xds_MJO = xds_MJO.sel(time=slice(dc[0], dc[-1]))
 

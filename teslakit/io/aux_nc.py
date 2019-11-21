@@ -11,7 +11,7 @@ import netCDF4
 import numpy as np
 
 # tk
-from ..custom_dateutils import npdt64todatetime as n2d
+from ..util.time_operations import npdt64todatetime as n2d
 
 
 def StoreBugXdset(xds_data, p_ncfile):
@@ -46,12 +46,15 @@ def StoreBugXdset(xds_data, p_ncfile):
 
         # dimensions values
         if vn in dim_names:
-            dv = root.createVariable(varname=vn,dimensions=(vn,), datatype='float32')
+            dv = root.createVariable(varname=vn, dimensions=(vn,), datatype='float32')
 
             if vn == 'time':  # time dimension values
                 if isinstance(vals[0], date):
                     # parse datetime.date to datetime.datetime
-                    vals = [datetime.combine(d,datetime.min.time()) for d in vals]
+                    vals = [datetime.combine(d, datetime.min.time()) for d in vals]
+                    # TODO: needed? rounds to day...
+                    #vals = vals
+
                 elif isinstance(vals[0], np.datetime64):
                     # parse numpy.datetime64 to datetime.datetime
                     vals = [n2d(d) for d in vals]
