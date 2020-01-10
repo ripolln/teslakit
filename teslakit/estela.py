@@ -280,6 +280,7 @@ class Predictor(object):
             if pos_date:
                 bmus_storms[pos_date[0]] = n_clusters + sc
 
+
         # copy kma and add bmus_storms
         self.KMA['sorted_bmus_storms'] = (('n_components',), bmus_storms)
 

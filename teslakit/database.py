@@ -381,12 +381,12 @@ class Database(object):
         xds = xr.open_dataset(self.paths.site.TIDE.sim_mmsl, decode_times=True)
         return xds
 
-    def Load_TIDE_mareografo(self):
+    def Load_TG(self):
         xds = xr.open_dataset(self.paths.site.TIDE.mareografo_nc)
 
         # fix data
-        xds.rename({'WaterLevel':'tide'}, inplace=True)
-        xds['tide'] = xds['tide'] * 1000
+        #xds.rename({'WaterLevel':'tide'}, inplace=True)
+        xds['WaterLevel'] = xds['WaterLevel'] * 1000
         return xds
 
     # COMPLETE DATA 

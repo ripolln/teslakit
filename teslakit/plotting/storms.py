@@ -625,6 +625,76 @@ def Plot_TCs_Params_MDAvsSIM(TCs_params_MDA, TCs_params_sim, show=True):
     if show: plt.show()
     return fig
 
+
+def Plot_TCs_RBFval(TCs_subset, waves_sim, TCs_dataset, waves_rbf, show=True):
+    '''
+
+    '''
+
+    # figure conf.
+    d_lab = {
+        'pressure_min': 'Pmin (mbar)',
+        'velocity_mean': 'Vmean (km/h)',
+        'gamma': 'gamma (º)',
+        'delta': 'delta (º)',
+    }
+
+    # variables to plot
+    vns1 = ['pressure_min', 'velocity_mean', 'gamma', 'delta']
+    # vns2 = ['hs', 'tp', 'dir', 'twl', 'ss']
+    vns2 = ['hs', 'tp', 'dir']
+    n = len(vns1)
+    n2 = len(vns2)
+
+    # figure
+    fig = plt.figure(figsize=(_faspect*_fsize, _faspect*_fsize))
+    gs = gridspec.GridSpec(n, n2, wspace=0.2, hspace=0.2)
+
+    for i in range(n):
+        for j in range(n2):
+
+            # get variables to plot
+            vn1 = vns1[i]
+            vn2 = vns2[j]
+
+            # historical and simulated
+            vvh1 = TCs_subset[:, i]
+            vvh2 = waves_sim[vn2].values[:]
+
+            vvs1 = TCs_dataset[:, i]
+            vvs2 = waves_rbf[vn2].values[:]
+
+            # scatter plot
+            ax = plt.subplot(gs[i, j])
+            axplot_scatter_params(ax, vvh2, vvh1, vvs2, vvs1)
+
+            # custom labels
+            ax.set_xlabel(vn2)
+            ax.set_ylabel(vn1)
+
+            ax.set_ylabel
+
+            # if j==i+1:
+            #     ax.set_xlabel(
+            #         d_lab[vn2],
+            #         {'fontsize':10, 'fontweight':'bold'}
+            #     )
+            # if j==i+1:
+            #     ax.set_ylabel(
+            #         d_lab[vn1],
+            #         {'fontsize':10, 'fontweight':'bold'}
+            #     )
+            #
+            # if i==0 and j==n-1:
+            #     ax.legend()
+
+
+    # show and return figure
+    if show: plt.show()
+    return fig
+
+
+
 def Plot_Category_Change(xds_categ_changeprobs, cmap='Blues', show=True):
     '''
     Plot category change betwen r1 and r2

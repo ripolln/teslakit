@@ -7,7 +7,7 @@ import xarray as xr
 from datetime import timedelta, datetime
 import sys
 from teslakit.io.matlab import ReadMatfile
-from teslakit.custom_dateutils import DateConverter_Mat2Py
+from teslakit.util.time_operations import DateConverter_Mat2Py
 from teslakit.waves import AWL as Runup
 from teslakit.io.aux_nc import StoreBugXdset
 
@@ -46,8 +46,9 @@ matfile = rutin + 'Historicos/KWA_historical_parameters_2016_sep.mat'
 
 
 #----------------------------------------------------------------
-# Load data
+# 0) Load data
 data = ReadMatfile(matfile)
+
 
 if id[0] == 'offshore':
     if id[1] == 'historical':
@@ -82,22 +83,22 @@ if id[0] == 'offshore':
         time = [d_ini + timedelta(hours=i) for i in range((d_end-d_ini).days * 24)]
         dt_hours = (time[2]-time[1]).total_seconds()/3600.0
 
-elif id[0] == 'nearshore':
-
-    # Hs, Tp, Dir, SL(incluye AT, MMSL y SS)
-    hs = data['results'][:,0]
-    tp = data['results'][:,1]
-    dir = data['results'][:,2]
-    sl = data['results'][:,3]
-
-
-    d_ini= np.datetime64('1979-01-01 00:00').astype(datetime)
-    d_end = np.datetime64('2016-12-31 00:00').astype(datetime)
-
-    time = [d_ini + timedelta(hours=i) for i in range(0, (d_end-d_ini).days * 24 +1, 3)]
-    dt_hours = (time[2]-time[1]).total_seconds()/3600.0
-
-    # waterdepth_NO = data['waterdepth_NO']
+# elif id[0] == 'nearshore':
+#
+#     # Hs, Tp, Dir, SL(incluye AT, MMSL y SS)
+#     hs = data['results'][:,0]
+#     tp = data['results'][:,1]
+#     dir = data['results'][:,2]
+#     sl = data['results'][:,3]
+#
+#
+#     d_ini= np.datetime64('1979-01-01 00:00').astype(datetime)
+#     d_end = np.datetime64('2016-12-31 00:00').astype(datetime)
+#
+#     time = [d_ini + timedelta(hours=i) for i in range(0, (d_end-d_ini).days * 24 +1, 3)]
+#     dt_hours = (time[2]-time[1]).total_seconds()/3600.0
+#
+#     # waterdepth_NO = data['waterdepth_NO']
 
 
 
@@ -109,10 +110,10 @@ if id[0] == 'offshore':
     # Offshore: Atmospheric Induced Water level proxy
     twl = runup2# + ss  # TWL = AWL
 
-elif id[0] == 'nearshore':
-    # At the coast: TWL proxy
-    # twl = runup2 + ss + at + mmsl
-    twl = runup2 + sl
+# elif id[0] == 'nearshore':
+#     # At the coast: TWL proxy
+#     # twl = runup2 + ss + at + mmsl
+#     twl = runup2 + sl
 
 fig, ax1 = plt.subplots()
 ax1.plot(time, twl, label='twl')
@@ -130,7 +131,8 @@ print('twl threshold (m): ', round(twl_threshold,2))
 print()
 
 ax1.plot([time[0], time[-1]], [twl_threshold, twl_threshold], '-k', label=('threshold:', str(percentile), '%'))
-
+plt.show()
+sys.exit()
 
 #---------------------------------------------------------
 # 3)From consecutive peaks above threshold: select the maximum, keep duration and

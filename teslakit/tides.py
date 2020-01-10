@@ -21,7 +21,7 @@ def Calculate_MMSL(xds_tide, year_ini, year_end):
 
             tide_sel_m = xds_tide.where(
                 (xds_tide.time >= d1) & (xds_tide.time <= d2),
-                drop = True).tide[:-2]
+                drop = True).WaterLevel[:-2]
             time_sel = tide_sel_m.time.values
 
             if len(time_sel) >= 300:

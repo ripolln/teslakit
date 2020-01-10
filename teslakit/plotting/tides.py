@@ -73,7 +73,7 @@ def axplot_sea_level(ax, sea_level_time, sea_level_val, var_time, var_val,
 
     ax.plot(
         sea_level_time, sea_level_val, '-k',
-        linewidth = 0.2, label = 'tide'
+        linewidth = 0.2, label = 'sea level'
     )
     ax.plot(
         var_time, var_val, '-r',
@@ -83,7 +83,7 @@ def axplot_sea_level(ax, sea_level_time, sea_level_val, var_time, var_val,
     # customize axs
     ax.legend()
     ax.set_xlim(var_time[0], var_time[-1])
-    ax.set_title('Tide - {0}'.format(var_name), fontweight='bold')
+    ax.set_title('TG - {0}'.format(var_name), fontweight='bold')
     ax.set_xlabel('time')
     ax.set_ylabel('Sea Level (mm)')
 
@@ -150,7 +150,7 @@ def Plot_Validate_MMSL_tseries(
     if show: plt.show()
     return fig
 
-def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, show=True):
+def Plot_Validate_scatter(mmsl_data, mmsl_pred, var1, var2, show=True):
     'Plots scatter comparison between mmsl data and mmsl predicted with nlm'
 
     # plot figure
@@ -161,12 +161,12 @@ def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, show=True):
     axs.axhline(linestyle='--', linewidth=0.5, color='k')
     axs.axvline(linestyle='--', linewidth=0.5, color='k')
 
-    dmin = np.min(mmsl_data)
-    dmax = np.max(mmsl_data)
+    dmin = np.nanmin(mmsl_data)
+    dmax = np.nanmax(mmsl_data)
     axs.plot([dmin, dmax], [dmin, dmax], '--k')
 
-    axs.set_xlabel('Historical MMSL (mm)')
-    axs.set_ylabel('Simulated MMSL (mm)')
+    axs.set_xlabel(var1)
+    axs.set_ylabel(var2)
     axs.set_aspect('equal', 'box')
 
     # show and return figure
