@@ -26,8 +26,8 @@ bmus +=1
 
 num_clusters = 6  # o length permutation, o size m_probs_transition...
 
-# probs_target = [13.34, 12.07, 19.51, 12.49, 25.20, 17.40] # must sum 100%
-probs_target = [25.00, 10.00, 30.00, 5.00, 20.00, 10.00]
+probs_target = [13.34, 12.07, 19.51, 12.49, 25.20, 17.40] # must sum 100%
+# probs_target = [25.00, 10.00, 30.00, 5.00, 20.00, 10.00]
 probs_target = [i/100 for i in probs_target]  # to probabilities instead of percentages
 
 iter_error = 0.0001  # max error in any WT probs
