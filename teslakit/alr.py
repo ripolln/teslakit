@@ -465,7 +465,16 @@ class ALR_WRP(object):
         return f
 
     def Simulate(self, num_sims, time_sim, xds_covars_sim=None):
-        'Launch ARL model simulations'
+        '''
+        Launch ARL model simulations
+
+        num_sims           - number of simulations to compute
+        time_sim           - time array to solve
+
+        xds_covars_sim     - xr.Dataset (time,), cov_values
+            Covariates used at simulation, compatible with "n_sim" dimension
+            ("n_sim" dimension (optional) will be iterated with each simulation)
+        '''
 
         # switch library probabilities predictor function 
         if self.model_library == 'statsmodels':
@@ -501,14 +510,6 @@ class ALR_WRP(object):
         # use a d_terms_settigs copy 
         d_terms_settings_sim = self.d_terms_settings.copy()
 
-        # preload some data
-        if xds_covars_sim != None:
-
-            # simulation covariates
-            sim_covars_T = xds_covars_sim.cov_values.values
-            sim_covars_T_mean = sim_covars_T.mean(axis=0)
-            sim_covars_T_std = sim_covars_T.std(axis=0)
-
         # filter usage counter
         c_fs = 0
 
@@ -517,11 +518,25 @@ class ALR_WRP(object):
         evbmus_sims = np.zeros((len(time_yfrac), num_sims))
         for n in range(num_sims):
 
+            # preload some data (simulation covariates)
+            cvtxt = ''
+            if xds_covars_sim != None:
+
+                # check if n_sim dimension in xds_covars_sim
+                if 'n_sim' in xds_covars_sim.dims:
+                    sim_covars_T = xds_covars_sim.isel(n_sim=n).cov_values.values
+                    cvtxt = ' (Covs. {0:03d})'.format(n+1)
+                else:
+                    sim_covars_T = xds_covars_sim.cov_values.values
+
+                sim_covars_T_mean = sim_covars_T.mean(axis=0)
+                sim_covars_T_std = sim_covars_T.std(axis=0)
+
             # progress bar 
             pbar = tqdm(
                 total=len(time_yfrac)-mk_order,
                 file=sys.stdout,
-                desc = 'Sim. Num. {0:03d}'.format(n+1)
+                desc = 'Sim. Num. {0:03d}{1}'.format(n+1, cvtxt)
             )
 
             evbmus = evbmus_values[1:mk_order+1]
@@ -602,6 +617,7 @@ class ALR_WRP(object):
 
         py_month_ini  - start month for PerpetualYear bmus comparison
         '''
+        # TODO: add arg n_sim = None (for plotting only one sim output)
 
         # load fit and sim bmus
         xds_ALR_fit = self.LoadBmus_Fit()
@@ -637,16 +653,14 @@ class ALR_WRP(object):
         )
         l_figs.append(fig_PP)
 
-        # Plot WTs Transition (probability change / scatter Fit vs. Sim) 
-        for s in range(num_sims):
+        # Plot WTs Transition (probability change / scatter Fit vs. ACCUMULATED Sim) 
+        sttl = 'Cluster Probabilities Transitions: All Simulations'
+        fig_CT = Plot_Compare_Transitions(
+            cluster_size, bmus_values_hist, bmus_values_sim,
+            sttl = sttl, show = show,
+        )
+        l_figs.append(fig_CT)
 
-            # plot each simulation 
-            sttl = 'Cluster Probabilities Transitions. Simulation {0}'.format(s)
-            fig = Plot_Compare_Transitions(
-                cluster_size, bmus_values_hist, bmus_values_sim[:,s],
-                sttl = sttl, show = show,
-            )
-            l_figs.append(fig)
 
         # TODO export handling (if show=False)    
         #p_save = self.p_report_sim

@@ -43,7 +43,7 @@ def Plot_AstronomicalTide(time, atide, show=True):
     return fig
 
 def Plot_ValidateTTIDE(time, atide, atide_ttide, show=True):
-    'Compares astronomical tide and ttide prediction'
+    'Compares astronomical tide and Utide prediction'
 
     # plot figure
     fig, axs = plt.subplots(figsize=(_faspect*_fsize, _fsize))
@@ -55,10 +55,10 @@ def Plot_ValidateTTIDE(time, atide, atide_ttide, show=True):
     plt.plot(
         time, atide_ttide, '-r',
         linewidth = 0.02,
-        label = 'ttide model'
+        label = 'Utide model'
     )
     plt.xlim(time[0], time[-1])
-    plt.title('Astronomical tide - TTIDE validation')
+    plt.title('Astronomical tide - UTIDE validation')
     plt.xlabel('time')
     plt.ylabel('tide (m)')
     axs.legend()
@@ -150,7 +150,7 @@ def Plot_Validate_MMSL_tseries(
     if show: plt.show()
     return fig
 
-def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, show=True):
+def Plot_Validate_scatter(mmsl_data, mmsl_pred, xlabel='', ylabel='', show=True):
     'Plots scatter comparison between mmsl data and mmsl predicted with nlm'
 
     # plot figure
@@ -161,17 +161,27 @@ def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, show=True):
     axs.axhline(linestyle='--', linewidth=0.5, color='k')
     axs.axvline(linestyle='--', linewidth=0.5, color='k')
 
-    dmin = np.min(mmsl_data)
-    dmax = np.max(mmsl_data)
+    dmin = np.nanmin(mmsl_data)
+    dmax = np.nanmax(mmsl_data)
     axs.plot([dmin, dmax], [dmin, dmax], '--k')
 
-    axs.set_xlabel('Historical MMSL (mm)')
-    axs.set_ylabel('Simulated MMSL (mm)')
+    axs.set_xlabel(xlabel)
+    axs.set_ylabel(ylabel)
     axs.set_aspect('equal', 'box')
 
     # show and return figure
     if show: plt.show()
     return fig
+
+def Plot_Validate_MMSL_scatter(mmsl_data, mmsl_pred, show=True):
+    'Plots scatter comparison between mmsl data and mmsl predicted with nlm'
+
+    return Plot_Validate_scatter(
+        mmsl_data, mmsl_pred,
+        xlabel = 'Historical MMSL (mm)',
+        ylabel = 'Simulated MMSL (mm)',
+        show = show,
+    )
 
 def Plot_MMSL_Prediction(mmsl_time, mmsl_data, show=True):
     'Plots predicted mmsl data'
