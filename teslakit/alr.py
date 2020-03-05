@@ -570,7 +570,21 @@ class ALR_WRP(object):
                 # Event sequence simulation  (sklearn)
                 X = np.concatenate(list(terms_i.values()), axis=1)
                 prob = pred_prob_fun(X)  # statsmodels // sklearn functions
-                probTrans = np.cumsum(prob[-1,:])
+                prob = prob[-1,:]
+
+                # #-------------------------------------------
+                # # climate change
+                # np.set_printoptions(suppress=True)
+                # np.set_printoptions(precision=2)
+                #
+                # rel_dif = [2.20, -7.56, 3.49, -9.38, 24.10, -14.29] # relative changes obtained from Mathew
+                # prob_modif = prob + prob * rel_dif/100
+                #
+                # prob_modif = prob_modif/np.sum(prob_modif)
+                # prob = prob_modif
+                # #-------------------------------------------
+
+                probTrans = np.cumsum(prob)
                 nrnd = np.random.rand()
                 evbmus = np.append(evbmus, np.where(probTrans>nrnd)[0][0]+1)
 
