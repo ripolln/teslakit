@@ -712,12 +712,12 @@ def Plot_TCs_Params_STORM_MDAvsSIM(TCs_params_MDA, TCs_params_sim, show=True):
         'gamma': 'gamma (º)',
         'delta': 'delta (º)',
         'velocity_mean': 'Vmean (km/h)',
-        'radius_mean': 'Rman (km)',
+        'mean_radius': 'Rman (km)',
         'winds_mean': 'Winds (m/s)'
     }
 
     # variables to plot
-    vns = ['pressure_min', 'gamma', 'delta', 'velocity_mean', 'radius_mean','winds_mean']
+    vns = ['pressure_min', 'gamma', 'delta', 'velocity_mean', 'mean_radius','winds_mean']
     n = len(vns)
 
     # figure
