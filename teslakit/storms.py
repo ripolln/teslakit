@@ -44,7 +44,7 @@ def GeoAzimuth(lat1, lon1, lat2, lon2):
     
 def Extract_Circle_STORM(xds_TCs, p_lon, p_lat, r, d_vns):
     '''
-    Extracts TCs inside circle - used with NWO or Nakajo databases
+    Extracts TCs inside circle - used with STORM database
 
     xds_TCs: tropical cyclones track database
         lon, lat, pressure variables
@@ -107,11 +107,12 @@ def Extract_Circle_STORM(xds_TCs, p_lon, p_lat, r, d_vns):
 
     for i_storm in range(n_storms):
         # fix longitude <0 data and skip "one point" tracks
-        pos_storm = [i for i, value in enumerate(storms) if value == i_storm]     
-        #print('tormenta i')
-        #print(i_storm)   
-        #print('posicion_tormenta i')
-        #print(pos_storm)
+        # pos_storm = [i for i, value in enumerate(storms) if value == i_storm]
+        pos_storm = [storms == i_storm]
+        # print('tormenta i')
+        # print(i_storm)
+        # print('posicion_tormenta i')
+        # print(pos_storm)
         lon_storm = lon[pos_storm]
         #print(lon_storm)
         if not isinstance(lon_storm, np.ndarray): continue
