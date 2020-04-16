@@ -34,7 +34,7 @@ p_data_temp = r'/Users/anacrueda/Documents/Data/STORMs/data'
 db = Database(p_data)
 
 # set site
-db.SetSite('MAJURO')
+db.SetSite('ROI')
 
 # %%
 # --------------------------------------
@@ -94,12 +94,12 @@ print(tc_storms)
 
 ##
 # wave point longitude and latitude ROI
-#pnt_lon = 167.5
-#pnt_lat = 9.75
+pnt_lon = 167.5
+pnt_lat = 9.75
 
 # wave point longitude and latitude MAJURO
-pnt_lon = 171.25
-pnt_lat = 7.10
+# pnt_lon = 171.25
+# pnt_lat = 7.10
 
 # radius for TCs selection (º)
 r1 = 14
