@@ -253,7 +253,7 @@ def Plot_Schemaball(xds_data):
     return None
 
 
-def axplot_RP(ax, t_h, v_h, tg_h, vg_h, t_s, v_s, var_name):
+def axplot_RP(ax, t_h, v_h, tg_h, vg_h, t_s, v_s, var_name, sim_percentile=95):
     'axes plot return period historical vs simulation'
 
     # historical maxima
@@ -279,8 +279,8 @@ def axplot_RP(ax, t_h, v_h, tg_h, vg_h, t_s, v_s, var_name):
     )
 
     # simulation maxima percentile 95% and 05%
-    p95 = np.percentile(v_s, 95, axis=0,)
-    p05 = np.percentile(v_s, 5, axis=0,)
+    p95 = np.percentile(v_s, sim_percentile, axis=0,)
+    p05 = np.percentile(v_s, 100-sim_percentile, axis=0,)
 
     ax.semilogx(
         t_s, p95, linestyle='-', color='grey',
@@ -305,7 +305,7 @@ def axplot_RP(ax, t_h, v_h, tg_h, vg_h, t_s, v_s, var_name):
     ax.tick_params(axis='both', which='both', top=True, right=True)
     ax.grid(which='both')
 
-def Plot_ReturnPeriodValidation(xds_hist, xds_sim, show=True):
+def Plot_ReturnPeriodValidation(xds_hist, xds_sim, sim_percentile=95, show=True):
     'Plot Return Period historical - simulation validation'
 
     # aux func for calculating rp time
@@ -330,9 +330,17 @@ def Plot_ReturnPeriodValidation(xds_hist, xds_sim, show=True):
 
         return ts, vv
 
+    # clean nans
+    t_r = xds_hist.year.values[:]
+    v_r = xds_hist.values[:]
+
+    ix_nan = np.isnan(v_r)
+    t_r = t_r[~ix_nan]
+    v_r = v_r[~ix_nan]
+
     # RP calculation, var sorting historical
-    t_h = t_rp(xds_hist.year.values[:])
-    v_h = np.sort(xds_hist.values[:])
+    t_h = t_rp(t_r)
+    v_h = np.sort(v_r)
 
     # GEV fit historical
     #tg_h, vg_h = gev_fit(v_h)
@@ -350,6 +358,7 @@ def Plot_ReturnPeriodValidation(xds_hist, xds_sim, show=True):
         t_h, v_h, tg_h, vg_h,
         t_s, v_s,
         xds_sim.name,
+        sim_percentile=sim_percentile,
     )
 
     # show and return figure
