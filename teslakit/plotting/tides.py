@@ -43,6 +43,31 @@ def Plot_AstronomicalTide(time, atide, show=True):
     if show: plt.show()
     return fig
 
+def Plot_SL_AstronomicalTide(time, sl,atide, show=True):
+    'Plots astronomical tide temporal series'
+
+    # plot figure
+    fig, axs = plt.subplots(figsize=(_faspect*_fsize, _fsize))
+    plt.plot(
+        time, sl, '-r',
+        linewidth = 0.04,
+        label='Sea level'
+    )
+    plt.plot(
+        time, atide, '-k',
+        linewidth = 0.04,
+        label='AT'
+    )
+    plt.xlim(time[0], time[-1])
+    plt.title('Sea level & Astronomical tide')
+    plt.xlabel('time')
+    plt.ylabel('level (m)')
+    plt.legend()
+
+    # show and return figure
+    if show: plt.show()
+    return fig
+
 def Plot_ValidateTTIDE(time, atide, atide_ttide, show=True):
     'Compares astronomical tide and Utide prediction'
 
