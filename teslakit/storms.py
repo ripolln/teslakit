@@ -301,6 +301,8 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
     # point longitude and latitude
     lonlat_p = np.array([[p_lon, p_lat]])
 
+    print(xds_TCs)
+
     # get names of vars: longitude, latitude, pressure and time
     nm_lon = d_vns['longitude']
     nm_lat = d_vns['latitude']
