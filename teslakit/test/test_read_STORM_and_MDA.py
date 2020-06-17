@@ -19,11 +19,10 @@ sys.path.insert(0, op.join(os.path.abspath(''), '..', '..', '..'))
 
 # teslakit
 from teslakit.database import Database
-from teslakit.storms import Extract_Circle_STORM
+from teslakit.storms import Extract_Circle_STORM, Extract_Circle
 from teslakit.mda import MaxDiss_Simplified_NoThreshold
 from teslakit.plotting.storms import Plot_TCs_STORMSbase_Tracks, Plot_TCs_Params_STORM_MDAvsSIM, \
     Plot_TCs_Params_HISTvsSIM, Plot_TCs_Params_HISTvsSIM_histogram
-
 # %%
 # --------------------------------------
 # Teslakit database
@@ -34,7 +33,7 @@ p_data_temp = r'/Users/anacrueda/Documents/Data/STORMs/data'
 db = Database(p_data)
 
 # set site
-db.SetSite('ROI')
+db.SetSite('MAJURO')
 
 # %%
 # --------------------------------------
@@ -94,12 +93,12 @@ print(tc_storms)
 
 ##
 # wave point longitude and latitude ROI
-pnt_lon = 167.5
-pnt_lat = 9.75
+# pnt_lon = 167.5
+# pnt_lat = 9.75
 
 # wave point longitude and latitude MAJURO
-# pnt_lon = 171.25
-# pnt_lat = 7.10
+pnt_lon = 171.25
+pnt_lat = 7.10
 
 # radius for TCs selection (º)
 r1 = 14
@@ -138,7 +137,38 @@ Plot_TCs_STORMSbase_Tracks(
 
 ## check STORMs TCs vs. historical
 
-db.Load_TCs_r2_sim_params()
+# db.Load_TCs_r2_sim_params()
+#  load historical data
+
+# load historical data and set parameters
+TCs_wmo = db.Load_TCs_noaa()  # noaa Allstorms.ibtracs_wmo
+
+# --------------------------------------
+# Select Historical TCs inside circle
+
+# dictionary with needed variable names
+d_vns = {
+    'longitude': 'source_lon',
+    'latitude': 'source_lat',
+    'time': 'source_time',
+    'pressure': 'source_pres',
+}
+
+# Select TCs that crosses a circular area R1
+TCs_r1_tracks, TCs_r1_params = Extract_Circle(TCs_wmo, pnt_lon, pnt_lat, r1, d_vns)
+print('tcs_r1')
+print(TCs_r1_tracks)
+
+# Select TCs that crosses a circular area R2
+TCs_r2_tracks, TCs_r2_params = Extract_Circle(TCs_wmo, pnt_lon, pnt_lat, r2, d_vns)
+print('tcs_r2')
+print(TCs_r2_tracks)
+
+# store data
+db.Save_TCs_r1_hist(TCs_r1_tracks, TCs_r1_params)
+db.Save_TCs_r2_hist(TCs_r2_tracks, TCs_r2_params)
+
+
 
 # Historical vs STORM parameters:
 _, TCs_r2_hist_params = db.Load_TCs_r2_hist()  # historical TCs parameters inside radius 2
@@ -156,48 +186,48 @@ Plot_TCs_Params_HISTvsSIM_histogram(TCs_r2_hist_params, TCs_r2_sim_params)
 # MaxDiss classification
 
 # MDA number of cases
-num_sel_mda = 400
+# num_sel_mda = 400
 
 # get simulated parameters
-pmean_s = TCs_r2_sim_params.pressure_mean.values[:]
-pmin_s = TCs_r2_sim_params.pressure_min.values[:]
-gamma_s = TCs_r2_sim_params.gamma.values[:]
-delta_s = TCs_r2_sim_params.delta.values[:]
-vmean_s = TCs_r2_sim_params.velocity_mean.values[:]
-rmax_s = TCs_r2_sim_params.mean_radius.values[:]
-winds_s = TCs_r2_sim_params.winds_mean.values[:]
+# pmean_s = TCs_r2_sim_params.pressure_mean.values[:]
+# pmin_s = TCs_r2_sim_params.pressure_min.values[:]
+# gamma_s = TCs_r2_sim_params.gamma.values[:]
+# delta_s = TCs_r2_sim_params.delta.values[:]
+# vmean_s = TCs_r2_sim_params.velocity_mean.values[:]
+# rmax_s = TCs_r2_sim_params.mean_radius.values[:]
+# winds_s = TCs_r2_sim_params.winds_mean.values[:]
 
 # subset, scalar and directional indexes
-data_mda = np.column_stack((pmean_s, pmin_s, vmean_s, rmax_s, winds_s,delta_s, gamma_s))
-ix_scalar = [0,1,2,3,4]
-ix_directional = [5,6]
+# data_mda = np.column_stack((pmean_s, pmin_s, vmean_s, rmax_s, winds_s,delta_s, gamma_s))
+# ix_scalar = [0,1,2,3,4]
+# ix_directional = [5,6]
 
 # MDA
-centroids = MaxDiss_Simplified_NoThreshold(
-    data_mda, num_sel_mda, ix_scalar, ix_directional
-)
+# centroids = MaxDiss_Simplified_NoThreshold(
+#     data_mda, num_sel_mda, ix_scalar, ix_directional
+# )
 
 
 # store MDA storms - parameters
-TCs_r2_MDA_params = xr.Dataset(
-    {
-        'pressure_mean':(('storm'), centroids[:,0]),
-        'pressure_min':(('storm'), centroids[:,1]),
-        'velocity_mean':(('storm'), centroids[:,2]),
-        'mean_radius':(('storm'), centroids[:,3]),
-        'winds_mean':(('storm'), centroids[:,4]),
-        'delta':(('storm'), centroids[:,5]),
-        'gamma':(('storm'), centroids[:,6]),
-    },
-    coords = {
-        'storm':(('storm'), np.arange(num_sel_mda))
-    },
-)
-
-print(TCs_r2_MDA_params)
-
-db.Save_TCs_r2_mda_params(TCs_r2_MDA_params)
+# TCs_r2_MDA_params = xr.Dataset(
+#     {
+#         'pressure_mean':(('storm'), centroids[:,0]),
+#         'pressure_min':(('storm'), centroids[:,1]),
+#         'velocity_mean':(('storm'), centroids[:,2]),
+#         'mean_radius':(('storm'), centroids[:,3]),
+#         'winds_mean':(('storm'), centroids[:,4]),
+#         'delta':(('storm'), centroids[:,5]),
+#         'gamma':(('storm'), centroids[:,6]),
+#     },
+#     coords = {
+#         'storm':(('storm'), np.arange(num_sel_mda))
+#     },
+# )
+#
+# print(TCs_r2_MDA_params)
+#
+# db.Save_TCs_r2_mda_params(TCs_r2_MDA_params)
 
 #  Simulated vs MDA selection: scatter plot parameters
-Plot_TCs_Params_STORM_MDAvsSIM(TCs_r2_MDA_params, TCs_r2_sim_params)
+# Plot_TCs_Params_STORM_MDAvsSIM(TCs_r2_MDA_params, TCs_r2_sim_params)
 
