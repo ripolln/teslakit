@@ -338,6 +338,66 @@ class Database(object):
     def Load_WAVES_partitions_nc(self):
         return xr.open_dataset(self.paths.site.WAVES.partitions_p1)
 
+    def Load_WAVES_partitions_CSIRO(self):
+        xds = xr.open_dataset(self.paths.site.WAVES.partitions_p1)
+        print(xds)
+        print()
+
+        # join 2 different time periods for partitions
+        for var in ['hs', 'tp', 'dir', 'spr']:
+
+            for i in range(4):
+
+                # first period
+                if var == 'dir':
+                    phs_a = xds['{variable}{part}'.format(variable='th', part=i)].dropna(dim='time')
+                    phs_a = phs_a.rename('p{variable}{part}'.format(variable=var, part=i))
+                    phs_a['time'] = phs_a['time'].dt.round('H')
+
+                elif var == 'spr':
+                    phs_a = xds['{variable}{part}'.format(variable='si', part=i)].dropna(dim='time')
+                    phs_a = phs_a.rename('p{variable}{part}'.format(variable=var, part=i))
+                    phs_a['time'] = phs_a['time'].dt.round('H')
+
+                else:
+                    phs_a = xds['{variable}{part}'.format(variable=var, part=i)].dropna(dim='time')
+                    phs_a = phs_a.rename('p{variable}{part}'.format(variable=var, part=i))
+                    phs_a['time'] = phs_a['time'].dt.round('H')
+
+                # second period
+                phs_b = xds['p{variable}{part}'.format(variable=var, part=i)].dropna(dim='time')
+                phs_b['time'] = phs_b['time'].dt.round('H')
+
+                # join both periods
+                phs_temp = xr.merge([phs_a, phs_b])
+
+                # update xds_out
+                if i == 0:
+                    if var=='hs':
+                        xds_out = phs_temp
+                    else:
+                        xds_out = xr.merge([xds_out, phs_temp])
+                else:
+                    xds_out = xr.merge([xds_out, phs_temp])
+
+
+        # add no partitions data
+        hs = xds['hs'].dropna(dim='time')
+        hs['time'] = hs['time'].dt.round('H')
+        xds_out = xr.merge([xds_out, hs])
+
+        dir = xds['dir'].dropna(dim='time')
+        dir['time'] = dir['time'].dt.round('H')
+        xds_out = xr.merge([xds_out, dir])
+
+        fp = xds['fp'].dropna(dim='time')
+        fp['time'] = fp['time'].dt.round('H')
+        fp = fp.rename('tp')
+        xds_out = xr.merge([xds_out, 1.0/fp])
+
+        return xds_out
+
+
     def Save_WAVES_hist(self, xds):
         save_nc(xds, self.paths.site.WAVES.hist)
 
