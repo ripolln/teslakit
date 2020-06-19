@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy.special import ndtri  # norm inv
-from scipy.stats import  genextreme, gumbel_l, spearmanr, norm
+from scipy.stats import  genextreme, gumbel_l, spearmanr, norm, weibull_min
 from statsmodels.distributions.empirical_distribution import ECDF
 from numpy.random import choice, multivariate_normal, randint, rand
 
@@ -936,7 +936,7 @@ class Climate_Emulator(object):
         elif vn in vars_WBL:
 
             # TODO Weibull CDF
-            norm_VV = None
+            norm_VV = weibull_min.cdf(vv,*weibull_min.fit(vv))
 
         return norm_VV
 
@@ -975,7 +975,7 @@ class Climate_Emulator(object):
         elif vn in vars_WBL:
 
             # TODO Weibull ICDF
-            ppf_VV = None
+            ppf_VV = weibull_min.ppf(pb,*weibull_min.fit(vv))
 
         return ppf_VV
 
