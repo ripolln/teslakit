@@ -222,6 +222,81 @@ def Plot_TCs_TracksParams(TCs_tracks, TCs_params, show=True):
     if show: plt.show()
     return fig
 
+
+def Plot_TCs_STORMSbase_Tracks(xds_TCs_r2,
+                              lon1, lon2, lat1, lat2,
+                              pnt_lon, pnt_lat, r2,
+                              show=True):
+    'Plot Historical TCs tracks map, requires basemap module'
+
+    try:
+        from mpl_toolkits.basemap import Basemap
+    except:
+        print('basemap module required.')
+        return
+
+    fig, ax = plt.subplots(1, figsize=(_faspect*_fsize, _fsize))
+
+    # setup mercator map projection.
+    m = Basemap(
+        llcrnrlon = lon1, llcrnrlat = lat1,
+        urcrnrlon = lon2, urcrnrlat = lat2,
+        resolution = 'l', projection = 'cyl',
+        lat_0 = lat1, lon_0 = lon1, area_thresh = 0.01,
+    )
+    m.drawcoastlines()
+    m.fillcontinents(color = 'silver')
+    m.drawmapboundary(fill_color = 'lightcyan')
+    m.drawparallels(np.arange(lat1, lat2, 20), labels = [1,1,0,0])
+    m.drawmeridians(np.arange(lon1, lon2, 20), labels = [0,0,0,1])
+
+    # plot r2 storms
+    for s in range(len(xds_TCs_r2.storm)):
+        lon = xds_TCs_r2.isel(storm = s).lon.values[:]
+        lon[np.where(lon<0)] = lon[np.where(lon<0)] + 360
+
+        if s==0:
+            ax.plot(
+                lon, xds_TCs_r2.isel(storm = s).lat.values[:],
+                color = 'indianred', alpha = 0.8,
+                label = 'Enter {0}° radius'.format(r2)
+            )
+        else:
+            ax.plot(
+                lon, xds_TCs_r2.isel(storm = s).lat.values[:],
+                color = 'indianred', alpha = 0.8
+            )
+            ax.plot(
+                lon[0], xds_TCs_r2.isel(storm = s).lat.values[0],
+                '.', color = 'indianred', markersize = 10
+            )
+
+    # plot point
+    ax.plot(
+        pnt_lon, pnt_lat, '.',
+        markersize = 15, color = 'brown',
+        label = 'STUDY SITE'
+    )
+
+    # plot r2 circle
+    circle2 = Circle(
+        m(pnt_lon, pnt_lat), r2,
+        facecolor = 'indianred', edgecolor = 'indianred',
+        linewidth = 3, alpha = 0.8,
+        label='{0}° Radius'.format(r2))
+    ax.add_patch(circle2)
+
+    # customize axes
+    ax.set_aspect(1.0)
+    ax.set_ylim(lat1, lat2)
+    ax.set_title('STORMSdatabase TCs', fontsize=15)
+    ax.legend(loc=0, fontsize=14)
+
+    # show and return figure
+    if show: plt.show()
+    return fig
+
+
 def Plot_TCs_HistoricalTracks(xds_TCs_r1, xds_TCs_r2,
                               lon1, lon2, lat1, lat2,
                               pnt_lon, pnt_lat, r1, r2,
@@ -394,6 +469,85 @@ def Plot_TCs_HistoricalTracks_Category(xds_TCs_r1, cat,
     ax.set_aspect(1.0)
     ax.set_ylim(lat1,lat2)
     ax.set_title('Historical TCs', fontsize=15)
+    ax.legend(loc=0, fontsize=14)
+    axlegend_categ(ax)
+
+    # show and return figure
+    if show: plt.show()
+    return fig
+
+def Plot_TCs_Tracks_Category (xds_TCs_r1, cat,
+                                      lon1, lon2, lat1, lat2,
+                                      pnt_lon, pnt_lat, r1, d_vns, title,
+                                      show=True):
+    'Plot Historical TCs category map, requires basemap module'
+
+    try:
+        from mpl_toolkits.basemap import Basemap
+    except:
+        print('basemap module required.')
+        return
+
+    fig, ax = plt.subplots(1, figsize=(_faspect*_fsize, _fsize))
+
+    # setup mercator map projection.
+    m = Basemap(
+        llcrnrlon = lon1, llcrnrlat = lat1,
+        urcrnrlon = lon2, urcrnrlat = lat2,
+        resolution = 'l', projection = 'cyl',
+        lat_0 = lat1, lon_0 = lon1, area_thresh=0.01
+    )
+    m.drawcoastlines()
+    m.fillcontinents(color = 'silver')
+    m.drawmapboundary(fill_color = 'lightcyan')
+    m.drawparallels(np.arange(lat1, lat2, 20), labels = [1,0,0,0])
+    m.drawmeridians(np.arange(lon1, lon2, 20), labels = [0,0,0,1])
+
+    for s in range(len(xds_TCs_r1.storm)):
+        #lon = xds_TCs_r1.isel(storm = s).lon_wmo.values[:]
+        lon = xds_TCs_r1.isel(storm = s)[d_vns['longitude']].values[:]
+        lon[np.where(lon<0)] = lon[np.where(lon<0)] + 360
+        if s==0:
+            ax.plot(
+                #lon, xds_TCs_r1.isel(storm = s).lat_wmo.values[:],
+                lon, xds_TCs_r1.isel(storm = s)[d_vns['latitude']].values[:],
+                '-', color = get_storm_color(int(cat[s].values)),
+                alpha = 0.5, label = 'Enter {0}° radius'.format(r1)
+            )
+        else:
+            ax.plot(
+               #lon, xds_TCs_r1.isel(storm = s).lat_wmo.values[:],
+                lon, xds_TCs_r1.isel(storm = s)[d_vns['latitude']].values[:],
+                '-', color = get_storm_color(int(cat[s].values)),
+                alpha = 0.5,
+            )
+            ax.plot(
+                #lon[0], xds_TCs_r1.isel(storm = s).lat_wmo.values[0],
+                lon[0], xds_TCs_r1.isel(storm = s)[d_vns['latitude']].values[0],
+                '.', color = get_storm_color(int(cat[s].values)),
+                markersize = 10,
+            )
+
+    # plot point
+    ax.plot(
+        pnt_lon, pnt_lat, '.',
+        markersize = 15, color = 'brown',
+        label = 'STUDY SITE'
+    )
+
+    # plot circle
+    circle = Circle(
+        m(pnt_lon, pnt_lat), r1,
+        facecolor = 'grey', edgecolor = 'grey',
+        linewidth = 3, alpha = 0.5,
+        label='Radius {0}º'.format(r1)
+    )
+    ax.add_patch(circle)
+
+    # customize axes
+    ax.set_aspect(1.0)
+    ax.set_ylim(lat1,lat2)
+    ax.set_title('{0} TCs'.format(title), fontsize=15)
     ax.legend(loc=0, fontsize=14)
     axlegend_categ(ax)
 
@@ -624,6 +778,69 @@ def Plot_TCs_Params_MDAvsSIM(TCs_params_MDA, TCs_params_sim, show=True):
     # show and return figure
     if show: plt.show()
     return fig
+
+
+def Plot_TCs_Params_STORM_MDAvsSIM(TCs_params_MDA, TCs_params_sim, show=True):
+    '''
+    Plot scatter with MDA selection vs simulated parameters
+    '''
+
+    # figure conf.
+    d_lab = {
+        'pressure_min': 'Pmin (mbar)',
+        'gamma': 'gamma (º)',
+        'delta': 'delta (º)',
+        'velocity_mean': 'Vmean (km/h)',
+        'mean_radius': 'Rman (km)',
+        'winds_mean': 'Winds (m/s)'
+    }
+
+    # variables to plot
+    vns = ['pressure_min', 'gamma', 'delta', 'velocity_mean', 'mean_radius','winds_mean']
+    n = len(vns)
+
+    # figure
+    fig = plt.figure(figsize=(_faspect*_fsize, _faspect*_fsize))
+    gs = gridspec.GridSpec(n-1, n-1, wspace=0.2, hspace=0.2)
+
+    for i in range(n):
+        for j in range(i+1, n):
+
+            # get variables to plot
+            vn1 = vns[i]
+            vn2 = vns[j]
+
+            # historical and simulated
+            vvh1 = TCs_params_MDA[vn1].values[:]
+            vvh2 = TCs_params_MDA[vn2].values[:]
+
+            vvs1 = TCs_params_sim[vn1].values[:]
+            vvs2 = TCs_params_sim[vn2].values[:]
+
+            # scatter plot 
+            ax = plt.subplot(gs[i, j-1])
+            axplot_scatter_params_MDA(ax, vvh2, vvh1, vvs2, vvs1)
+
+            # custom labels
+            if j==i+1:
+                ax.set_xlabel(
+                    d_lab[vn2],
+                    {'fontsize':10, 'fontweight':'bold'}
+                )
+            if j==i+1:
+                ax.set_ylabel(
+                    d_lab[vn1],
+                    {'fontsize':10, 'fontweight':'bold'}
+                )
+
+            if i==0 and j==n-1:
+                ax.legend()
+
+    # show and return figure
+    if show: plt.show()
+    return fig
+
+
 
 def Plot_Category_Change(xds_categ_changeprobs, cmap='Blues', show=True):
     '''
