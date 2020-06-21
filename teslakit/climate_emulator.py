@@ -269,6 +269,20 @@ class Climate_Emulator(object):
             nm = '{0:08d}.nc'.format(n_sim)  # sim code
             StoreBugXdset(d, op.join(p, nm))
 
+    def SaveSim_wavesonly(self, WVS_sim, n_sim):
+        'Store waves and TCs simulation'
+
+        # storage data and folders
+        d_fs = [WVS_sim]
+        p_fs = [self.p_sim_wvs_notcs]
+
+        # store each simulation at different nc file 
+        for d, p in zip(d_fs, p_fs):
+            if not op.isdir(p): os.makedirs(p)
+
+            nm = '{0:08d}.nc'.format(n_sim)  # sim code
+            StoreBugXdset(d, op.join(p, nm))
+			
     def Load(self):
         'Loads fitted climate emulator data'
 
@@ -307,6 +321,19 @@ class Climate_Emulator(object):
             WVS_upd = xr.open_dataset(p_WVS_upd)
 
         return WVS_sim, TCs_sim, WVS_upd
+		
+    def LoadSim_onlywaves(self, n_sim=0):
+        'Load waves and TCs simulations'
+
+        WVS_sim, TCs_sim, WVS_upd = None, None, None
+
+        nm = '{0:08d}.nc'.format(n_sim)  # sim code
+        p_WVS_sim = op.join(self.p_sim_wvs_notcs, nm)
+
+        if op.isfile(p_WVS_sim):
+            WVS_sim = xr.open_dataset(p_WVS_sim)
+
+        return WVS_sim
 
     def LoadSim_All(self, n_sim_ce=0):
         '''
