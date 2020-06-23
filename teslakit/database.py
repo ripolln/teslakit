@@ -476,6 +476,7 @@ class Database(object):
 
         # load data
         AWT = self.Load_SST_KMA()  # bmus + 1
+        AWT=AWT.isel(n_pcacomp=np.where(AWT.time.dt.year>=1970)[0])
         MSL = self.Load_TIDE_hist_mmsl() # mmsl (mm)
         MJO = self.Load_MJO_hist()
         DWT = self.Load_ESTELA_KMA()  # bmus + 1
@@ -511,7 +512,10 @@ class Database(object):
         MSL_h = MSL_h.drop_vars(['mmsl_median']).rename({'mmsl':'MMSL'})
         MSL_h['MMSL'] = MSL_h['MMSL'] / 1000.0  # mm to m
         DWT_h = DWT_h.rename({'bmus':'DWT'})
-        ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
+        # ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
+        
+        ATD_h = xr.Dataset({'AT': (('time',), ATD_h.predicted.values)},
+                         coords = {'time':ATD_h.time.values})
 
         # combine data
         xds = xr.combine_by_coords(
