@@ -295,6 +295,22 @@ class Database(object):
         save_nc(xds_tcs, self.paths.site.TCs.sim_r2)
         save_nc(xds_params, self.paths.site.TCs.sim_r2_params)
 
+    def Load_TCs_r1_sim_storm(self):
+        return xr.open_dataset(self.paths.site.TCs.sim_storm_r1), \
+               xr.open_dataset(self.paths.site.TCs.sim_storm_r1_params)
+
+    def Load_TCs_r2_sim_storm(self):
+        return xr.open_dataset(self.paths.site.TCs.sim_storm_r2), \
+               xr.open_dataset(self.paths.site.TCs.sim_storm_r2_params)
+
+    def Save_TCs_r1_sim_storm(self, xds_tcs, xds_params):
+        save_nc(xds_tcs, self.paths.site.TCs.sim_storm_r1)
+        save_nc(xds_params, self.paths.site.TCs.sim_storm_r1_params)
+
+    def Save_TCs_r2_sim_storm(self, xds_tcs, xds_params):
+        save_nc(xds_tcs, self.paths.site.TCs.sim_storm_r2)
+        save_nc(xds_params, self.paths.site.TCs.sim_storm_r2_params)
+
     def Load_TCs_r1_hist(self):
         return xr.open_dataset(self.paths.site.TCs.hist_r1), \
                 xr.open_dataset(self.paths.site.TCs.hist_r1_params)

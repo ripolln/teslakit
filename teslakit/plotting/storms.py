@@ -170,12 +170,12 @@ def axlegend_vel(ax):
     ax.add_artist(leg_vel)
 
 
-def Plot_TCs_TracksParams(TCs_tracks, TCs_params, show=True):
+def Plot_TCs_TracksParams(TCs_tracks, TCs_params, nm_lon, nm_lat, show=True):
     'Plots storms tracks and storms parametrized'
 
     # custom wmo names
-    nm_lon = 'lon_wmo'
-    nm_lat = 'lat_wmo'
+    # nm_lon = 'lon_wmo'
+    # nm_lat = 'lat_wmo'
 
     # get data from historical tracks
     n_storms = TCs_tracks.storm.shape[0]
@@ -584,8 +584,8 @@ def axplot_scatter_params_MDA(ax, x_MDA, y_MDA, x_sim, y_sim):
     )
 
     # MDA params 
-    batch_size = 100
-    n = 4
+    batch_size = 200
+    n = 5
     cs = ['black','red','orange','yellow','blue']
 
     for i in range(n):
