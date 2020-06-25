@@ -1533,29 +1533,53 @@ class Climate_Emulator(object):
         return xds_TCs_sim, xds_WVS_sim_updated
     
 
-    def Report_Fit(self, show=True):
-        'Report for extremes model fitting'
+    def Report_Fit(self, vns_GEV=['Hs'], show=True, plot_chrom=True, plot_sigma=True):
 
-        # get data (fams hs)
-        vars_gev_params = [x for x in self.vars_GEV if 'Hs' in x]
-        GEV_Par = self.GEV_Par
+        '''
+        Report for extremes model fitting
+
+       - GEV parameters for vns_GEV
+       - chromosomes probabilities
+       - sigma correlation
+        '''
+
+        f_out = []
+
+        # GEV variables reports
+        for vn in vns_GEV:
+            fs = self.Report_Gev(vn=vn, show=show)
+            f_out = f_out + fs
+
+        # Chromosomes and Sigma reports
         chrom = self.chrom
         d_sigma = self.sigma
 
-        f_out = []
-        # Plot GEV params for each WT
-        for gvn in vars_gev_params:
-            f = Plot_GEVParams(GEV_Par[gvn], show=show)
-            f_out.append(f)
-
         # Plot cromosomes probabilities
-        f = Plot_ChromosomesProbs(chrom, show=show)
-        f_out.append(f)
+        if plot_chrom:
+            f = Plot_ChromosomesProbs(chrom, show=show)
+            f_out.append(f)
 
 
         # Plot sigma correlation triangle
-        f = Plot_SigmaCorrelation(chrom, d_sigma, show=show)
-        f_out.append(f)
+        if plot_sigma:
+            f = Plot_SigmaCorrelation(chrom, d_sigma, show=show)
+            f_out.append(f)
+     
+        return f_out
+
+    def Report_Gev(self, vn='Hs', show=True):
+        'Plot vn variable GEV parameters for each WT. variables: Hs, Tp'
+
+        # GEV parameters 
+        GEV_Par = self.GEV_Par
+
+        # locate fam_vn variables 
+        vars_gev_params = [x for x in self.vars_GEV if vn in x]
+
+        f_out = []
+        for gvn in vars_gev_params:
+            f = Plot_GEVParams(GEV_Par[gvn], show=show)
+            f_out.append(f)
 
         return f_out
 
