@@ -443,9 +443,9 @@ class Database(object):
 
     # HYDROGRAMS
 
-    def Save_MU_TAU_hydrograms(self, l_xds):
+    def Save_MU_TAU_hydrograms(self, l_xds, location=None):
 
-        p_mutau = self.paths.site.ESTELA.hydrog_mutau
+        p_mutau = op.join(self.paths.site.ESTELA.hydrog_mutau, location)
         if not op.isdir(p_mutau): os.makedirs(p_mutau)
 
         for x in l_xds:
