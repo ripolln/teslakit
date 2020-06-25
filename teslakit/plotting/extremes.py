@@ -44,10 +44,15 @@ def Plot_GEVParams(xda_gev_var, show=True):
 
         if par in d_minmax.keys():
             cl = d_minmax[par]
+            maxx=np.nanmax([abs(np.min(par_values)),abs(np.max(par_values))])
+            cl = [-maxx, maxx]
         else:
-            cl = (np.min(par_values), np.max(par_values))
+            maxx=np.nanmax([abs(np.min(par_values)),abs(np.max(par_values))])
+            cl = [-maxx, maxx]
+            # cl = (np.min(par_values), np.max(par_values))
 
-        cc=ax.pcolor(rr_pv, cmap='coolwarm_r', clim=cl, edgecolor='k')
+        # cc=ax.pcolor(rr_pv, cmap='coolwarm_r', clim=cl, edgecolor='k')
+        cc=ax.pcolor(rr_pv, cmap='coolwarm_r', vmin=cl[0],vmax=cl[1], edgecolor='k')
         fig.colorbar(cc, ax=ax)
 
         # add grid and title
