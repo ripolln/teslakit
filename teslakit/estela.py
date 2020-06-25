@@ -15,7 +15,7 @@ from matplotlib import path
 from .pca import PCA_EstelaPred
 from .kma import KMA_regression_guided
 from .kma import SimpleMultivariateRegressionModel as SMRM
-from .intradaily import Calculate_Hydrographs
+from .intradaily import Calculate_Hydrographs, Calculate_Hydrographs_runup
 
 from .plotting.estela import Plot_EOFs_EstelaPred, Plot_DWTs_Mean_Anom, \
 Plot_DWTs_Probs
@@ -224,7 +224,7 @@ class Predictor(object):
         self.Save()
 
     def Calc_KMA_regressionguided(
-        self, num_clusters, xds_waves, waves_vars, alpha, min_group_size=None):
+        self, num_clusters, xds_waves, waves_vars, alpha, min_group_size=None, repres = 0.95):
         'KMA regression guided with waves data'
 
         # we have to miss some days of data due to ESTELA
@@ -235,7 +235,6 @@ class Predictor(object):
         xds_Yregres = SMRM(self.PCA, xds_waves, waves_vars)
 
         # classification: KMA regresion guided
-        repres = 0.95
         self.KMA = KMA_regression_guided(
             self.PCA, xds_Yregres,
             num_clusters, repres, alpha, min_group_size
@@ -266,6 +265,28 @@ class Predictor(object):
         _, l_xds_MUTAU = Calculate_Hydrographs(xds_BMUS, xds_WAVES)
 
         return l_xds_MUTAU
+
+
+    def Calc_MU_TAU_Hydrographs_runup(self, xds_WAVES, xds_runup):
+        '''
+        Calculates TWL hydrographs
+
+        returns list of xarray.Dataset with TWL hydrographs MU,TAU arrays for each WT
+        '''
+
+        # TODO: SACAR DE AQUI, replantear hydrographs
+
+        # get sorted bmus from kma
+        xds_BMUS = xr.Dataset(
+            {'bmus':(('time', self.KMA.sorted_bmus.values[:]))},
+            coords = {'time': self.KMA.time.values[:]}
+        )
+
+        # Calculate hydrographs for each WT
+        dic_Hydrographs, l_xds_MUTAU = Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_runup)
+
+        return dic_Hydrographs, l_xds_MUTAU
+
 
     def Mod_KMA_AddStorms(self, storm_dates, storm_categories):
         '''
