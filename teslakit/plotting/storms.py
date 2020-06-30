@@ -75,7 +75,7 @@ def axplot_Tracks_Circle(ax, lon_point, lat_point, r_point,
     ax.axis('equal')
     ax.axis('off')
     ax.set_title(
-        'Historical Tracks ({0} TCs inside R={1}º)'.format(n_storms, r_point),
+        'Original Tracks ({0} TCs inside R={1}º)'.format(n_storms, r_point),
         {'fontsize': 14, 'fontweight':'bold'}
     )
 
