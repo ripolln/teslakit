@@ -421,7 +421,7 @@ class Climate_Emulator(object):
             wt_AWL = wvs_AWL.sel(time = slice(d1, d2 + np.timedelta64(23,'h')))[:]
 
             # get window maximum TWL date
-            wt_AWL_max = wt_AWL.where(wt_AWL==wt_AWL.max(), drop=True).squeeze()
+            wt_AWL_max = wt_AWL.where(wt_AWL==np.nanmax(wt_AWL), drop=True).squeeze()
 
             # append data
             ms_AWL.append(wt_AWL_max.values)
@@ -1029,8 +1029,8 @@ class Climate_Emulator(object):
 
         # filter parameters
         hs_min, hs_max = 0, 15
-        tp_min, tp_max = 2, 25
-        ws_min, ws_max = 0.001, 0.06
+        tp_min, tp_max = 1, 25
+        ws_min, ws_max = 0, 0.03
 
         # waves families - variables (sorted for simulation output)
         wvs_fams = self.fams
