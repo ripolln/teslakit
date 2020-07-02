@@ -935,6 +935,44 @@ class Database(object):
 
         return var_lims, RBF_coeffs
 
+    def Load_HYCREWW_Q(self):
+        'Load RBF coefficients and hycreww sims. max and min values'
+
+        p_h = self.paths.site.HYCREWW.rbf_coef + '_Q'  # RBF_coefficients folder
+
+        # load max and min limits
+        p_max = op.join(p_h, 'Max_from_simulations.mat')
+        p_min = op.join(p_h, 'Min_from_simulations.mat')
+        vs = ['level', 'hs', 'tp', 'rslope', 'bslope', 'rwidth', 'cf']
+
+        smax = ReadMatfile(p_max)['maximum']
+        smin = ReadMatfile(p_min)['minimum']
+        dl = np.column_stack([smin, smax])
+
+        var_lims = {}
+        for c, vn in enumerate(vs):
+            var_lims[vn] = dl[c]
+        var_lims['hs_lo2'] = [0.005, 0.05]
+
+        # RBF coefficients (for 15 cases)
+        code = 'Coeffs_Runup_Xbeach_test'
+        n_cases = 15
+
+        RBF_coeffs = []
+        for i in range(n_cases):
+            cf = ReadMatfile(op.join(p_h, '{0}{1}.mat'.format(code,i+1)))
+
+            rbf = {
+                'constant': cf['coeffsave']['RBFConstant'],
+                'coeff': cf['coeffsave']['rbfcoeff'],
+                'nodes': cf['coeffsave']['x'],
+            }
+
+            RBF_coeffs.append(rbf)
+
+        return var_lims, RBF_coeffs
+
+
     # CLIMATE CHANGE
 
     def Load_RCP85(self):
