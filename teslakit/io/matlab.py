@@ -263,6 +263,74 @@ def ReadNakajoMats(p_mfiles):
     )
     return xds_out
 
+
+def ReadNakajoMats_sara(p_mfiles):
+    '''
+    Read Nakajo simulated hurricanes data from .mat files folder.
+    Return xarray.Dataset
+    '''
+
+    # read MAT files & generate dataset
+    n_sim = 10
+    max_ts_end = 0
+    n_storms = 0
+    var_names = [
+        'yts', 'ylon_TC', 'ylat_TC', 'yDIR', 'ySPEED', 'yCPRES', 'del_reason'
+    ]
+    ls_xds = []
+
+    # for all files
+    for i in range(n_sim):
+
+        # read sim file
+        p_matf = op.join(p_mfiles, 'YCAL{0}.mat'.format(i + 1))
+        d_matf = sio.loadmat(p_matf)
+
+        # search for maximum length arrays (time)
+        v_max = 1
+        for j in range(len(var_names)):
+            v = d_matf[var_names[j]][0]
+            for k in range(v.size):
+                v_max = np.max([v_max, v[k].size])
+
+        # initialize var holder dict
+        d_vars = {}
+        for vn in var_names:
+            d_vars[vn] = np.nan * np.ones([v.size, v_max])
+
+        # store variables
+        for j, c in enumerate(var_names):
+            v = d_matf[var_names[j]][0]
+            for n in range(v.size):
+                v_nrow = v[n]
+                d_vars[c][n, :v_nrow.size] = np.squeeze(v_nrow)
+
+        # add to xarray dataset
+        xds_out = xr.Dataset(
+            {
+                'yts': (('storm', 'time',), d_vars['yts']),
+                'ylon_TC': (('storm', 'time',), d_vars['ylon_TC']),
+                'ylat_TC': (('storm', 'time',), d_vars['ylat_TC']),
+                'yDIR': (('storm', 'time',), d_vars['yDIR']),
+                'ySPEED': (('storm', 'time',), d_vars['ySPEED']),
+                'yCPRES': (('storm', 'time',), d_vars['yCPRES']),
+                'del_reason': (('storm', 'time',), d_vars['del_reason']),
+            },
+            coords={
+                'storm': np.arange(n_storms, n_storms + v.size),
+                'time': range(v_max)
+            }
+        )
+
+        # append dataset
+        ls_xds.append(xds_out)
+
+        # count storms
+        n_storms += v.size
+
+    return ls_xds
+
+
 def ReadTCsSimulations(p_sims, point_file='Punto1.mat'):
     '''
     Read data from solved TCs simulations. Return xarray.Dataset

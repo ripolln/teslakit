@@ -4,8 +4,67 @@
 from math import radians, degrees, sin, cos, asin, acos, sqrt, atan2, pi
 import numpy as np
 import xarray as xr
+import os.path as op
+import glob
+import pandas as pd
 
 from .util.operations import GetUniqueRows
+
+
+def ReadStormFiles(p_storm, basins):
+    '''
+    Read STORM files for given basin
+    Return xarray.Dataset
+    '''
+
+    ls_path = op.join(p_storm, 'STORM_DATA_IBTRACS_{}*.txt'.format([basin for basin in basins]))
+
+    file_list = sorted(glob.glob(ls_path))
+
+    tc_list = []
+    cont = 0
+    for file in file_list:
+        df = pd.read_table(file,
+                           sep=',',
+                           header=None,
+                           names=(
+                           'year', 'month', 'storm', 'TimeStep', 'Basin', 'lat', 'lon', 'pressure_min', 'windspeed_max',
+                           'rmax', 'cat', 'land', 'dist_land'),
+                           dtype={'year': np.int64,
+                                  'month': np.int64,
+                                  'storm': np.int64,
+                                  'TimeStep': np.int64,
+                                  'basin': np.int64,
+                                  'lat': np.float64,
+                                  'lon': np.float64,
+                                  'pressure_min': np.float64,
+                                  'windspeed_max': np.float64,
+                                  'rmax': np.float64,
+                                  'cat': np.int64,
+                                  'land': np.int64,
+                                  'dist_land': np.float64})
+
+        for i in df['year'].unique():
+            if i == 0: continue
+            late_storm = np.nanmax(df.loc[df.year == i - 1, ['storm']])
+            df.loc[df.year == i, ['storm']] = df.loc[df.year == i, ['storm']] + late_storm + 1
+
+        if cont > 0:
+            last_storm = storms[-1]
+            last_year = years[-1]
+            df['storm'] = df['storm'] + last_storm + 1
+            df['year'] = df['year'] + last_year + 1
+        df.set_index('storm', inplace=True)
+        # store DataFrame in list
+        tc_list.append(df)
+        storms = df.index.tolist()
+        years = df.year.tolist()
+        cont = cont + 1
+
+    tc_list = pd.concat(tc_list)
+    tc_storms = tc_list.to_xarray()
+
+    return tc_storms
 
 
 def GeoDistance(lat1, lon1, lat2, lon2):
@@ -154,7 +213,7 @@ def Extract_Circle_STORM(xds_TCs, p_lon, p_lat, r, d_vns):
         geo_dist = np.asarray(geo_dist)
 
         # find storm inside circle and calculate parameters
-        if (geo_dist < r).any():
+        if (geo_dist < r).any() & (geo_dist.size > 1):
             # print(cont)
             # storm inside circle
             ix_in = np.where(geo_dist < r)[0][:]
@@ -342,36 +401,37 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
     time = xds_TCs[nm_tim].values[:]
     # get storms inside circle area
     n_storms = xds_TCs.storm.shape[0]
+    id_storms = xds_TCs.storm.values
     print(n_storms)
     l_storms_area = []
 
     # inside parameters holders
-    l_prs_min_in = []   # circle minimun pressure
+    l_prs_min_in = []  # circle minimun pressure
     l_prs_mean_in = []  # circle mean pressure
     l_vel_mean_in = []  # circle mean translation speed
-    l_categ_in = []     # circle storm category
-    l_date_in = []      # circle date (day)
-    l_date_last = []    # last cyclone date 
-    l_gamma = []        # azimuth 
-    l_delta = []        # delta 
+    l_categ_in = []  # circle storm category
+    l_date_in = []  # circle date (day)
+    l_date_last = []  # last cyclone date
+    l_gamma = []  # azimuth
+    l_delta = []  # delta
 
-    l_ix_in = []        # historical enters the circle index
-    l_ix_out = []       # historical leaves the circle index 
+    l_ix_in = []  # historical enters the circle index
+    l_ix_out = []  # historical leaves the circle index
 
     for i_storm in range(n_storms):
+        #    for i_storm, st_id in enumerate(id_storms):
         # fix longitude <0 data and skip "one point" tracks
         lon_storm = lon[i_storm]
-        #print(lon_storm)
+
         if not isinstance(lon_storm, np.ndarray): continue
-        lon_storm[lon_storm<0] = lon_storm[lon_storm<0] + 360
-        #print(lon_storm)
+        lon_storm[lon_storm < 0] = lon_storm[lon_storm < 0] + 360
 
         # stack storm longitude, latitude
         lonlat_s = np.column_stack(
             (lon_storm, lat[i_storm])
         )
 
-        # index for removing nans
+        # index for removing nans
         ix_nonan = ~np.isnan(lonlat_s).any(axis=1)
         lonlat_s = lonlat_s[ix_nonan]
 
@@ -380,25 +440,26 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
         for lon_ps, lat_ps in lonlat_s:
             geo_dist.append(GeoDistance(lat_ps, lon_ps, p_lat, p_lon))
         geo_dist = np.asarray(geo_dist)
-
+        #        print(lonlat_s, p_lat, p_lon)
+        #        print(geo_dist)
 
         # find storm inside circle and calculate parameters
-        if (geo_dist < r).any():
-
+        if ((geo_dist < r).any()) & (geo_dist.size > 1):
+            #            print(geo_dist.size)
             # storm inside circle
             ix_in = np.where(geo_dist < r)[0][:]
 
             # storm translation velocity
             geo_dist_ss = []
-            for i_row in range(lonlat_s.shape[0]-1):
+            for i_row in range(lonlat_s.shape[0] - 1):
                 i0_lat, i0_lon = lonlat_s[i_row][1], lonlat_s[i_row][0]
-                i1_lat, i1_lon = lonlat_s[i_row+1][1], lonlat_s[i_row+1][0]
+                i1_lat, i1_lon = lonlat_s[i_row + 1][1], lonlat_s[i_row + 1][0]
                 geo_dist_ss.append(GeoDistance(i0_lat, i0_lon, i1_lat, i1_lon))
             geo_dist_ss = np.asarray(geo_dist_ss)
 
             # get delta time in hours (irregular data time delta)
             if isinstance(time[i_storm][0], np.datetime64):
-                # round to days
+                # round to days
                 time[i_storm] = np.array(
                     [np.datetime64(xt, 'h') for xt in time[i_storm]]
                 )
@@ -413,14 +474,16 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
                     time[i_storm][~np.isnan(time[i_storm])]
                 ).astype(float)
 
-            vel = geo_dist_ss * 111.0/delta_h  # km/h
+            vel = geo_dist_ss * 111.0 / delta_h  # km/h
 
-            # promediate vel 
-            velpm = (vel[:-1] + vel[1:])/2
+            # promediate vel
+            velpm = (vel[:-1] + vel[1:]) / 2
+
+            #            print(i_storm, vel.shape, vel[0])
             velpm = np.append(vel[0], velpm)
             velpm = np.append(velpm, vel[-1])
 
-            # calculate azimuth 
+            # calculate azimuth
             lat_in_end, lon_in_end = lonlat_s[ix_in[-1]][1], lonlat_s[ix_in[-1]][0]
             lat_in_ini, lon_in_ini = lonlat_s[ix_in[0]][1], lonlat_s[ix_in[0]][0]
             gamma = GeoAzimuth(lat_in_end, lon_in_end, lat_in_ini, lon_in_ini)
@@ -428,8 +491,8 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
 
             # calculate delta
             nd = 1000
-            st = 2*np.pi/nd
-            ang = np.arange(0, 2*np.pi + st, st)
+            st = 2 * np.pi / nd
+            ang = np.arange(0, 2 * np.pi + st, st)
             xps = r * np.cos(ang) + p_lat
             yps = r * np.sin(ang) + p_lon
             angle_radius = []
@@ -438,30 +501,30 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
             angle_radius = np.asarray(angle_radius)
 
             im = np.argmin(np.absolute(angle_radius - gamma))
-            delta = GeoAzimuth(p_lat, p_lon, xps[im], yps[im]) # (-180, +180)
+            delta = GeoAzimuth(p_lat, p_lon, xps[im], yps[im])  # (-180, +180)
             if delta < 0.0: delta += 360
 
-            # more parameters 
-            prs_s_in = prs[i_storm][ix_in]  # pressure
+            # more parameters
+            prs_s_in = prs[i_storm][ix_in]  # pressure
             prs_s_min = np.min(prs_s_in)  # pressure minimun
             prs_s_mean = np.mean(prs_s_in)
 
-            vel_s_in = velpm[ix_in]  # velocity
-            vel_s_mean = np.mean(vel_s_in) # velocity mean
+            vel_s_in = velpm[ix_in]  # velocity
+            vel_s_mean = np.mean(vel_s_in)  # velocity mean
 
             categ = GetStormCategory(prs_s_min)  # category
 
             dist_in = geo_dist[ix_in]
-            p_dm = np.where((dist_in==np.min(dist_in)))[0]  # closest to point
+            p_dm = np.where((dist_in == np.min(dist_in)))[0]  # closest to point
 
-            time_s_in = time[i_storm][ix_in]  # time
-            time_closest = time_s_in[p_dm][0]  # time closest to point 
+            time_s_in = time[i_storm][ix_in]  # time
+            time_closest = time_s_in[p_dm][0]  # time closest to point
 
-            # filter storms 
+            # filter storms
             # TODO: storms with only one track point inside radius. solve?
             if np.isnan(np.array(prs_s_in)).any() or \
-               (np.array(prs_s_in) <= 860).any() or \
-               gamma == 0.0:
+                    (np.array(prs_s_in) <= 860).any() or \
+                    gamma == 0.0:
                 continue
 
             # store parameters
@@ -474,42 +537,74 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
             l_gamma.append(gamma)
             l_delta.append(delta)
 
-            # store historical indexes inside circle 
+            # store historical indexes inside circle
             l_ix_in.append(ix_in[0])
             l_ix_out.append(ix_in[-1])
 
-            # store last cyclone date too
+            # store last cyclone date too
             l_date_last.append(time[i_storm][ix_nonan][-1])
 
+    #    print(l_storms_area)
+    #    print(type(l_storms_area))
     # cut storm dataset to selection
     xds_TCs_sel = xds_TCs.isel(storm=l_storms_area)
-    xds_TCs_sel = xds_TCs_sel.assign_coords(storm = np.array(l_storms_area))
+    xds_TCs_sel = xds_TCs_sel.assign_coords(storm=np.array(l_storms_area + xds_TCs.storm.values[0]))
 
-    # store storms parameters 
+    # store storms parameters
     xds_TCs_sel_params = xr.Dataset(
         {
-            'pressure_min':(('storm'), np.array(l_prs_min_in)),
-            'pressure_mean':(('storm'), np.array(l_prs_mean_in)),
-            'velocity_mean':(('storm'), np.array(l_vel_mean_in)),
-            'gamma':(('storm'), np.array(l_gamma)),
-            'delta':(('storm'), np.array(l_delta)),
-            'category':(('storm'), np.array(l_categ_in)),
-            'dmin_date':(('storm'), np.array(l_date_in)),
-            'last_date':(('storm'), np.array(l_date_last)),
-            'index_in':(('storm'), np.array(l_ix_in)),
-            'index_out':(('storm'), np.array(l_ix_out)),
+            'pressure_min': (('storm'), np.array(l_prs_min_in)),
+            'pressure_mean': (('storm'), np.array(l_prs_mean_in)),
+            'velocity_mean': (('storm'), np.array(l_vel_mean_in)),
+            'gamma': (('storm'), np.array(l_gamma)),
+            'delta': (('storm'), np.array(l_delta)),
+            'category': (('storm'), np.array(l_categ_in)),
+            'dmin_date': (('storm'), np.array(l_date_in)),
+            'last_date': (('storm'), np.array(l_date_last)),
+            'index_in': (('storm'), np.array(l_ix_in)),
+            'index_out': (('storm'), np.array(l_ix_out)),
         },
-        coords = {
-            'storm':(('storm'), np.array(l_storms_area))
+        coords={
+            'storm': (('storm'), np.array(l_storms_area + xds_TCs.storm.values[0]))
         },
-        attrs = {
-            'point_lon' : p_lon,
-            'point_lat' : p_lat,
-            'point_r' : r,
+        attrs={
+            'point_lon': p_lon,
+            'point_lat': p_lat,
+            'point_r': r,
         }
     )
 
     return xds_TCs_sel, xds_TCs_sel_params
+
+
+def Extract_Circle_list(ls_xds_TCs, p_lon, p_lat, r, d_vns):
+    '''
+    Extracts TCs inside circle, using a data list, merges a single dataset and
+    accomodates attributes, variables...
+    '''
+    ls_tracks, ls_params = [], []
+    for i in range(len(ls_xds_TCs)):
+        # extract circle
+        xds_TCs_sel, xds_TCs_sel_params = Extract_Circle(ls_xds_TCs[i], p_lon, p_lat, r, d_vns)
+        ls_tracks.append(xds_TCs_sel)
+        ls_params.append(xds_TCs_sel_params)
+
+    # merge datasets
+    xds_TCs_sel = xr.merge(ls_tracks)
+    xds_TCs_sel_params = xr.merge(ls_params)
+
+    # add lost attributes
+    xds_TCs_sel_params.attrs['point_lon'] = p_lon
+    xds_TCs_sel_params.attrs['point_lat'] = p_lat
+    xds_TCs_sel_params.attrs['point_r'] = r
+
+    # index_in, index_out and category dtype changed at the merge!!
+    xds_TCs_sel_params['index_in'] = xds_TCs_sel_params.index_in.astype('int64')
+    xds_TCs_sel_params['index_out'] = xds_TCs_sel_params.index_out.astype('int64')
+    xds_TCs_sel_params['category'] = xds_TCs_sel_params.category.astype('int64')
+
+    return xds_TCs_sel, xds_TCs_sel_params
+
 
 def GetStormCategory(pres_min):
     '''
