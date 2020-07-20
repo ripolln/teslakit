@@ -283,9 +283,9 @@ class Predictor(object):
         )
 
         # Calculate hydrographs for each WT
-        dic_Hydrographs, l_xds_MUTAU = Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_runup)
+        xds_MUTAU = Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_runup)
 
-        return dic_Hydrographs, l_xds_MUTAU
+        return xds_MUTAU
 
 
     def Mod_KMA_AddStorms(self, storm_dates, storm_categories):

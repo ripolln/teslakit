@@ -340,8 +340,6 @@ class Database(object):
 
     def Load_WAVES_partitions_CSIRO(self):
         xds = xr.open_dataset(self.paths.site.WAVES.partitions_p1)
-        print(xds)
-        print()
 
         # join 2 different time periods for partitions
         for var in ['hs', 'tp', 'dir', 'spr']:
@@ -452,9 +450,9 @@ class Database(object):
             n_store = 'MUTAU_WT{0:02}.nc'.format(x.WT)
             save_nc(x, op.join(p_mutau, n_store))
 
-    def Load_MU_TAU_hydrograms(self):
+    def Load_MU_TAU_hydrograms(self, location=None):
 
-        p_mutau = self.paths.site.ESTELA.hydrog_mutau
+        p_mutau = op.join(self.paths.site.ESTELA.hydrog_mutau, location)
 
         # MU - TAU intradaily hidrographs for each WWT
         l_mutau_ncs = sorted(
@@ -943,7 +941,7 @@ class Database(object):
         # load max and min limits
         p_max = op.join(p_h, 'Max_from_simulations.mat')
         p_min = op.join(p_h, 'Min_from_simulations.mat')
-        vs = ['level', 'hs', 'tp', 'rslope', 'bslope', 'rwidth', 'cf']
+        vs = ['level', 'hs', 'tp', 'rslope', 'bslope', 'rwidth', 'Zb', 'cf']
 
         smax = ReadMatfile(p_max)['maximum']
         smin = ReadMatfile(p_min)['minimum']
