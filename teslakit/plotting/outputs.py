@@ -196,3 +196,81 @@ def Plot_LevelVariables_Histograms(data_hist, data_sim, show=True):
     if show: plt.show()
     return fig
 
+
+def axplot_compare_histograms(ax, var_1, var_2, n_bins=40,
+                      label_1='Historical', label_2='Simulation', ttl='',
+                      alpha_1=0.9, alpha_2=0.7,
+                      color_1='white', color_2='skyblue',
+                      density=False):
+    'axes plot histogram comparison between fit-sim variables'
+
+    (_, bins, _) = ax.hist(var_1, n_bins, weights=np.ones(len(var_1)) / len(var_1),
+            alpha=alpha_1, color=color_1, ec='k', label = label_1, density=density)
+
+    ax.hist(var_2, bins=bins, weights=np.ones(len(var_2)) / len(var_2),
+            alpha=alpha_2, color=color_2, ec='k', label = label_2, density=density)
+
+    # customize axes
+    ax.legend(prop={'size':8})
+    ax.set_title(ttl)
+
+    if density:
+        ax.set_ylabel('Probability')
+
+
+
+
+def Plot_FitSim_Histograms(data_fit, data_sim, vns, n_bins=40,
+                           color_1='white', color_2='skyblue',
+                           alpha_1=0.7, alpha_2=0.4,
+                           label_1='Historical', label_2 = 'Simulation',
+                           gs_1 = 1, gs_2 = None, supt=False, vns_lims={},
+                           density=False, show=True):
+    'Plots fit vs sim histograms for variables "vns"'
+
+    # grid spec default number of columns
+    if gs_2 == None: gs_2 = len(vns)
+
+    # plot figure
+    fig = plt.figure(figsize=(_faspect*_fsize, _fsize*gs_1/2.3))
+
+    # grid spec
+    gs = gridspec.GridSpec(gs_1, gs_2)  #, wspace=0.0, hspace=0.0)
+
+    # variables
+    cr, cc = 0, 0
+    for c, vn in enumerate(vns):
+
+        dh = data_fit[vn].values[:]; dh = dh[~np.isnan(dh)]
+        ds = data_sim[vn].values[:]; ds = ds[~np.isnan(ds)]
+
+        # variable max and min optional limits
+        if vn in vns_lims.keys():
+            vl_1, vl_2 = vns_lims[vn]
+            dh = dh[np.where((dh >= vl_1) & (dh <= vl_2))[0]]
+            ds = ds[np.where((ds >= vl_1) &( ds <= vl_2))[0]]
+
+        ax = plt.subplot(gs[cr, cc])
+        axplot_compare_histograms(
+            ax, dh, ds, ttl=vn, density=density, n_bins=n_bins,
+            color_1=color_1, color_2=color_2,
+            alpha_1=alpha_1, alpha_2=alpha_2,
+            label_1=label_1, label_2=label_2,
+        )
+
+        # grid spec counter
+        cc+=1
+        if cc >= gs_2:
+            cc=0
+            cr+=1
+
+    # fig suptitle
+    if supt:
+        fig.suptitle(
+            '{0} - {1} Comparison: {2}'.format(label_1, label_2, ', '.join(vns)),
+            fontsize=13, fontweight = 'bold',
+        )
+
+    # show and return figure
+    if show: plt.show()
+    return fig

@@ -145,7 +145,6 @@ def MaxDiss_Simplified_NoThreshold(data, num_centers, ix_scalar, ix_directional)
     # initialize centroids subset
     subset = np.array([data_norm[seed]])
     train = np.delete(data_norm, seed, axis=0)
-    bmus = np.array([seed])
 
     # repeat till we have desired num_centers
     n_c = 1
@@ -167,7 +166,6 @@ def MaxDiss_Simplified_NoThreshold(data, num_centers, ix_scalar, ix_directional)
 
         if not np.isnan(qerr):
             subset = np.append(subset, np.array([train[bmu,:]]), axis=0)
-            bmus = np.append(bmus, bmu)
             train = np.delete(train, bmu, axis=0)
             d_last = np.delete(d_last, bmu, axis=0)
 
@@ -182,5 +180,5 @@ def MaxDiss_Simplified_NoThreshold(data, num_centers, ix_scalar, ix_directional)
     # normalize scalar and directional data
     centroids = DeNormalize(subset, ix_scalar, ix_directional, minis, maxis)
 
-    return centroids, bmus
+    return centroids
 

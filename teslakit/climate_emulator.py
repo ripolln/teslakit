@@ -1028,9 +1028,9 @@ class Climate_Emulator(object):
         '''
 
         # filter parameters
-        hs_min, hs_max = 0, 15
+        hs_min, hs_max = 0, 5
         tp_min, tp_max = 1, 25
-        ws_min, ws_max = 0, 0.03
+        ws_min, ws_max = 0, 0.05
 
         # waves families - variables (sorted for simulation output)
         wvs_fams = self.fams
@@ -1178,8 +1178,8 @@ class Climate_Emulator(object):
 
             # wave stepness 
             if filters['ws']:
-                hs_s = sim_row[0::3][crm==1]
-                tp_s = sim_row[1::3][crm==1]
+                hs_s = sim_row[0:len(wvs_fams)*3:3][crm==1]
+                tp_s = sim_row[1:len(wvs_fams)*3:3][crm==1]
                 ws_s = hs_s / (1.56 * tp_s**2 )
                 if any(v <= ws_min for v in ws_s) or any(v >= ws_max for v in ws_s):
                     continue
