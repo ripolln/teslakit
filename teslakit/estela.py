@@ -298,7 +298,7 @@ class Predictor(object):
         bmus_storms = np.copy(self.KMA.sorted_bmus.values[:])  # copy numpy.array
 
         for sd, sc in zip(storm_dates, storm_categories):
-            sdr =  np.array(sd, dtype='datetime64[D]')  # round to day
+            sdr = np.array(sd, dtype='datetime64[D]')  # round to day
             pos_date = np.where(kma_dates==sdr)[0]
             if pos_date:
                 bmus_storms[pos_date[0]] = n_clusters + sc

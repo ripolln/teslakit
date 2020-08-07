@@ -174,8 +174,8 @@ def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
     '''
     Calculates intradaily hydrographs
 
-    xds_BMUS: (time) bmus
-    xds_WAVES: (time) hs, tp, dir
+    xds_BMUS: (time) bmus --> daily data
+    xds_WAVES: (time) hs, tp, dir --> hourly data
 
     returns dictionary of Hydrograph objects for each WT
     and list of xarray.Datasets containing MU and TAU
@@ -198,6 +198,7 @@ def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
     MU = []
     MU_2 = []
     TAU = []
+    T_ini = []
     T_runup_max = []
 
 
@@ -219,25 +220,16 @@ def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
         #     dir_max_v = np.nan
         #     mu_v = np.nan
         #     mu_v_2 = np.nan
+        #     time_ini = time_WT[0]
+        #     time_fin = time_WT[0]
         #     time_runup_max = time_WT[0]
-        #
-        # # work with storms <= 4 days
-        # elif len(storm_WT) >= 5:
-        #     twl_max_v = np.nan
-        #     twl_max_t = np.nan
-        #     hs_max_v = np.nan
-        #     tp_max_v = np.nan
-        #     dir_max_v = np.nan
-        #     mu_v = np.nan
-        #     mu_v_2 = np.nan
-        #     time_runup_max = time_WT[0]
-        #
-        # else:
+
+
+        #else:
 
         # start and end dates for hydrograph
         p1 = npdt64todatetime(time_WT[0])
         p2 = npdt64todatetime(time_WT[-1]).replace(hour=23)
-
 
         # get waves conditions for hydrograph
         xds_W = xds_WAVES.sel(time = slice(p1, p2))
@@ -272,6 +264,7 @@ def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
         tp_max_v = xds_W.Tp.isel(time=i_twlmax[0]).values
         dir_max_v = xds_W.Dir.isel(time=i_twlmax[0]).values
 
+
         #--------------------------------------------------------------------
 
         # store values
@@ -283,6 +276,7 @@ def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
         MU_2.append(mu_v_2)
         TAU.append(twl_max_t)
         T_runup_max.append(time_runup_max)
+        T_ini.append(p1)
         STORM_wt.append(storm_WT[0])
 
         # update index
@@ -292,16 +286,18 @@ def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
     # store mu, tau xarray.Dataset
     xds_hg_wt = xr.Dataset(
         {
-            'MU':(('time_runup_max',), np.array(MU)),
-            'MU2':(('time_runup_max',), np.array(MU_2)),
-            'TAU':(('time_runup_max',), np.array(TAU)),
-            'Hs':(('time_runup_max',), np.array(Hs_max)),
-            'Tp':(('time_runup_max',), np.array(Tp_max)),
-            'Dir':(('time_runup_max',), np.array(Dir_max)),
-            'Runup_max':(('time_runup_max',), np.array(TWL_max)),
-            'WT':(('time_runup_max',), np.array(STORM_wt)),
+            'MU':(('time',), np.array(MU)),
+            'MU2':(('time',), np.array(MU_2)),
+            'TAU':(('time',), np.array(TAU)),
+            'Hs':(('time',), np.array(Hs_max)),
+            'Tp':(('time',), np.array(Tp_max)),
+            'Dir':(('time',), np.array(Dir_max)),
+            'Runup_max':(('time',), np.array(TWL_max)),
+            'time_runup_max':(('time',),  np.array(T_runup_max).astype('datetime64[ns]')),
+            'WT':(('time',), np.array(STORM_wt)),
         },
-        coords={'time_runup_max': np.array(T_runup_max).astype('datetime64[ns]'),
+        coords={
+                'time': np.array(T_ini).astype('datetime64[ns]'),
                 },
     )
 
