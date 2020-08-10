@@ -28,8 +28,8 @@ def Calculate_MMSL(xda_tide, year_ini, year_end):
 
             if len(time_sel) >= 300:
                 # mean, median and dates
-                ts_mean = tide_sel_m.mean().values
-                ts_median = tide_sel_m.median().values
+                ts_mean = tide_sel_m.mean(skipna=True).values
+                ts_median = tide_sel_m.median(skipna=True).values
                 ts_time = time_sel[int(len(time_sel)/2)]
 
                 lout_mean.append(ts_mean)
