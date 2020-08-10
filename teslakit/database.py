@@ -401,10 +401,13 @@ class Database(object):
         return xds_ml, xds_at
 
     def Load_TIDE_hist_astro(self):
-        xds_at = xr.open_dataset(self.paths.site.TIDE.hist_astro)
+        xds_at = xr.open_dataset(self.paths.site.TIDE.mareografo_nc)
         xds_at = fill_metadata(xds_at)
 
         return  xds_at
+
+    def Save_TIDE_hist_astro(self, xds):
+        save_nc(xds, self.paths.site.TIDE.hist_astro, True)
 
     def Save_TIDE_sim_astro(self, xds):
         save_nc(xds, self.paths.site.TIDE.sim_astro, True)
