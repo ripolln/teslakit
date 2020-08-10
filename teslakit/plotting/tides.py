@@ -25,6 +25,23 @@ def axplot_histcompare(ax, var_fit, var_sim, color='green', n_bins=40,
     # customize axes
     ax.legend(prop={'size':10})
 
+def Plot_WaterLevel(time, atide, show=True):
+    'Plots water level temporal series'
+
+    # plot figure
+    fig, axs = plt.subplots(figsize=(_faspect*_fsize, _fsize))
+    plt.plot(
+        time, atide, '-k',
+        linewidth = 0.04,
+    )
+    plt.xlim(time[0], time[-1])
+    plt.title('Measured water level')
+    plt.xlabel('time')
+    plt.ylabel('water level (m)')
+
+    # show and return figure
+    if show: plt.show()
+    return fig
 def Plot_AstronomicalTide(time, atide, show=True):
     'Plots astronomical tide temporal series'
 
@@ -37,7 +54,7 @@ def Plot_AstronomicalTide(time, atide, show=True):
     plt.xlim(time[0], time[-1])
     plt.title('Astronomical tide')
     plt.xlabel('time')
-    plt.ylabel('tide (m)')
+    plt.ylabel('Astronomical tide (m)')
 
     # show and return figure
     if show: plt.show()
@@ -74,7 +91,7 @@ def axplot_sea_level(ax, sea_level_time, sea_level_val, var_time, var_val,
 
     ax.plot(
         sea_level_time, sea_level_val, '-k',
-        linewidth = 0.2, label = 'tide'
+        linewidth = 0.2, label = 'sea level'
     )
     ax.plot(
         var_time, var_val, '-r',
@@ -84,7 +101,7 @@ def axplot_sea_level(ax, sea_level_time, sea_level_val, var_time, var_val,
     # customize axs
     ax.legend()
     ax.set_xlim(var_time[0], var_time[-1])
-    ax.set_title('Tide - {0}'.format(var_name), fontweight='bold')
+    ax.set_title('Sea Level - {0}'.format(var_name), fontweight='bold')
     ax.set_xlabel('time')
     ax.set_ylabel('Sea Level (mm)')
 
