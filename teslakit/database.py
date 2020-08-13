@@ -148,11 +148,6 @@ class Database(object):
             p_sf = op.join(self.paths.p_site, sf)
             if not op.isdir(p_sf): os.makedirs(p_sf)
 
-        # create export figs subfolders
-        for k in self.paths.site.export_figs.keys():
-            p_sf = self.paths.site.export_figs[k]
-            if not op.isdir(p_sf): os.makedirs(p_sf)
-
         print('Teslakit Site generated at {0}'.format(p_site))
 
     def CheckInputFiles(self):
@@ -165,12 +160,12 @@ class Database(object):
             ('MJO', ['hist'], [op.isfile]),
             ('TCs', ['noaa', 'nakajo_mats'], [op.isfile, op.isdir]),
             ('SST', ['hist_pacific'], [op.isfile]),
-            ('WAVES', ['partitions_p1'], [op.isfile]),
-            ('ESTELA', ['coastmat', 'estelamat', 'gowpoint', 'slp'],
-             [op.isfile, op.isfile, op.isfile, op.isfile]),
+            ('WAVES', ['spectra'], [op.isfile]),
+            ('ESTELA', ['coastmat', 'estelamat', 'slp'],
+             [op.isfile, op.isfile, op.isfile]),
             ('TIDE', ['mareografo_nc', 'hist_astro'], [op.isfile, op.isfile]),
-            ('HYCREWW', ['rbf_coef'], [op.isdir]),
-            ('NEARSHORE', ['swan_projects'], [op.isdir]),
+            #('HYCREWW', ['rbf_coef'], [op.isdir]),
+            #('NEARSHORE', ['swan_projects'], [op.isdir]),
         ]
 
         # get status
@@ -330,13 +325,19 @@ class Database(object):
 
     # WAVES
 
-    def Load_WAVES_partitions(self):
-        xds = ReadGowMat(self.paths.site.WAVES.partitions_p1)
+    def Load_WAVES_partitions_GOW(self):
+        xds = ReadGowMat(self.paths.site.WAVES.partitions_gow)
         xds = fill_metadata(xds)
         return xds
 
-    def Load_WAVES_partitions_nc(self):
-        return xr.open_dataset(self.paths.site.WAVES.partitions_p1)
+    def Load_WAVES_spectra(self):
+        return xr.open_dataset(self.paths.site.WAVES.spectra)
+
+    def Save_WAVES_partitions(self, xds):
+        save_nc(xds, self.paths.site.WAVES.partitions)
+
+    def Load_WAVES_partitions(self):
+        return xr.open_dataset(self.paths.site.WAVES.partitions)
 
     def Load_WAVES_partitions_CSIRO(self):
         xds = xr.open_dataset(self.paths.site.WAVES.partitions_p1)
@@ -409,21 +410,6 @@ class Database(object):
 
     def Load_ESTELA_data(self):
         return ReadEstelaMat(self.paths.site.ESTELA.estelamat)
-
-    # TODO: remove?
-    #def Load_ESTELA_waves_np(self):
-    #    npzfile = np.load(self.paths.site.ESTELA.gowpoint)
-    #    xr1 = xr.Dataset(
-    #        {
-    #            'Hs': (['time'], npzfile['Hs']),
-    #            'Tp': (['time'], npzfile['Tp']),
-    #            'Tm': (['time'], npzfile['Tm02']),
-    #            'Dir': (['time'], npzfile['Dir']),
-    #            'dspr': (['time'], npzfile['dspr'])
-    #        },
-    #        coords = {'time': npzfile['time']}
-    #    )
-    #    return  xr1
 
     def Load_ESTELA_SLP(self):
         return xr.open_dataset(self.paths.site.ESTELA.slp)
@@ -577,11 +563,11 @@ class Database(object):
         s =  SplitStorage(ps)
         s.Save(xds)
 
-    def Load_HIST_OFFSHORE(self, vns=[], decode_times=False):
+    def Load_HIST_OFFSHORE(self, vns=[], decode_times=False, use_cftime=False):
         ps = self.paths.site.HISTORICAL.offshore
 
         s =  SplitStorage(ps)
-        return s.Load(vns=vns, decode_times=decode_times)
+        return s.Load(vns=vns, decode_times=decode_times, use_cftime=use_cftime)
 
     def Generate_SIM_Covariates(self, total_sims=None):
 
@@ -637,16 +623,16 @@ class Database(object):
         s =  SplitStorage(ps_sim)
         s.Save(xds, safe_time=True)
 
-    def Load_SIM_OFFSHORE(self, n_sim, vns=[], decode_times=False):
+    def Load_SIM_OFFSHORE(self, n_sim, vns=[], decode_times=False, use_cftime=False):
         ps = self.paths.site.SIMULATION.offshore
 
         nm = '{0:08d}'.format(n_sim)  # sim code
         ps_sim = op.join(ps, nm)
 
         s =  SplitStorage(ps_sim)
-        return s.Load(vns=vns, decode_times=decode_times)
+        return s.Load(vns=vns, decode_times=decode_times, use_cftime=use_cftime)
 
-    def Load_SIM_OFFSHORE_all(self, vns=[], decode_times=False):
+    def Load_SIM_OFFSHORE_all(self, vns=[], decode_times=False, use_cftime=False):
         ps = self.paths.site.SIMULATION.offshore
 
         # locate simulations
@@ -678,7 +664,7 @@ class Database(object):
 
         # optional decode times to cftime 
         if decode_times:
-            out = xr.decode_cf(out, use_cftime=True)
+            out = xr.decode_cf(out, use_cftime=use_cftime)
 
         return out
 
@@ -796,11 +782,11 @@ class Database(object):
         s =  SplitStorage(ps)
         s.Save(xds)
 
-    def Load_HIST_NEARSHORE(self, vns=[], decode_times=False):
+    def Load_HIST_NEARSHORE(self, vns=[], decode_times=False, use_cftime=False):
         ps = self.paths.site.HISTORICAL.nearshore
 
         s =  SplitStorage(ps)
-        return s.Load(vns=vns, decode_times=decode_times)
+        return s.Load(vns=vns, decode_times=decode_times, use_cftime=use_cftime)
 
     def Save_SIM_NEARSHORE(self, xds, n_sim):
         ps = self.paths.site.SIMULATION.nearshore
@@ -811,16 +797,16 @@ class Database(object):
         s =  SplitStorage(ps_sim)
         s.Save(xds, safe_time=True)
 
-    def Load_SIM_NEARSHORE(self, n_sim, vns=[], decode_times=False):
+    def Load_SIM_NEARSHORE(self, n_sim, vns=[], decode_times=False, use_cftime=False):
         ps = self.paths.site.SIMULATION.nearshore
 
         nm = '{0:08d}'.format(n_sim)  # sim code
         ps_sim = op.join(ps, nm)
 
         s =  SplitStorage(ps_sim)
-        return s.Load(vns=vns, decode_times=decode_times)
+        return s.Load(vns=vns, decode_times=decode_times, use_cftime=use_cftime)
 
-    def Load_SIM_NEARSHORE_all(self, vns=[], decode_times=False):
+    def Load_SIM_NEARSHORE_all(self, vns=[], decode_times=False, use_cftime=False):
         ps = self.paths.site.SIMULATION.nearshore
 
         # locate simulations
@@ -852,47 +838,52 @@ class Database(object):
 
         # optional decode times to cftime 
         if decode_times:
-            out = xr.decode_cf(out, use_cftime=True)
+            out = xr.decode_cf(out, use_cftime=use_cftime)
 
         return out
 
+    def Load_AWAC_buoy(self):
 
-    # RUNUP
-    # TODO SEGUIR REFACTOR AQUI
+        # buoy path and files
+        p_buoy = self.paths.site.HYSWAN.buoy
+        fs = ['Roi_AWAC_deploy1.mat', 'Roi_AWAC_deploy2.mat', 'Roi_AWAC_deploy3.mat']
 
+        # aux.
+        def Read_AWAC_mat(p_mat):
+            'Read a Roi_AWAC_deploy.mat file'
 
-    def Save_NEARSHORE_RUNUP_HIST(self, pd_df):
-        'Stores historical nearshore runup (hycrew output)'
+            # matlab file
+            mf = ReadMatfile(p_mat)['AWAC']
 
-        #save_nc(xds, self.paths.site.NEARSHORE.runup_hist, safe_time=True)
-        pd_df.to_pickle(self.paths.site.NEARSHORE.runup_hist)
+            # date string format
+            str_format = '%d-%b-%Y %H:%M:%S GMT'
 
-    def Load_NEARSHORE_RUNUP_HIST(self):
-        'Load historical nearshore runup (hycrew output)'
+            # read times and generate array
+            t0 = np.datetime64(datetime.strptime(mf['start_time'], str_format))
+            t1 = np.datetime64(datetime.strptime(mf['end_time'], str_format))
+            dt = np.timedelta64(mf['profile_interval_s'], 's')
 
-        #return xr.open_dataset(self.paths.site.NEARSHORE.runup_hist, decode_times=True)
-        return pd.read_pickle(self.paths.site.NEARSHORE.runup_hist)
+            times = np.arange(t0, t1+dt, dt)
 
-    def Save_NEARSHORE_RUNUP_SIM(self, l_pdfs):
+            # variables
+            return xr.Dataset(
+                {
+                    'Hs': (('time',), mf['hs'][0][:len(times)]),
+                    'Tp': (('time',), mf['tp'][0][:len(times)]),
+                    'Dir': (('time',), mf['dp'][0][:len(times)]),
+                },
+                coords = {'time':times}
+            )
 
-        if not op.isdir(self.paths.site.NEARSHORE.runup_sims):
-            os.makedirs(self.paths.site.NEARSHORE.runup_sims)
+        # read buoy files 
+        lx = []
+        for f in fs:
+            xds = Read_AWAC_mat(op.join(p_buoy, f))
+            lx.append(xds)
+        xout = xr.combine_by_coords(lx)
 
-        for c, pd_df in enumerate(l_pdfs):
-            p_sim = op.join(self.paths.site.NEARSHORE.runup_sims, '{0:04d}.nc'.format(c))
-            #save_nc(xds, p_sim, safe_time=True)
-            pd_df.to_pickle(p_sim)
+        return xout
 
-    def Load_NEARSHORE_RUNUP_SIM(self, n_sims=0):
-
-        l_sim = []
-        for c in range(n_sims):
-            p_sim = op.join(self.paths.site.NEARSHORE.runup_sims, '{0:04d}.nc'.format(c))
-            #l_sim.append(xr.open_dataset(p_sim, decode_times=True))
-            l_sim.append(pd.read_pickle(p_sim))
-
-
-        return l_sim
 
     # HYCREWW
 
@@ -932,6 +923,7 @@ class Database(object):
             RBF_coeffs.append(rbf)
 
         return var_lims, RBF_coeffs
+
 
     def Load_HYCREWW_Q(self):
         'Load RBF coefficients and hycreww sims. max and min values'
@@ -993,6 +985,9 @@ class Database(object):
         return lon, lat, RCP85ratioHIST_occurrence
 
 
+
+# teslakit database aux. objects
+
 class SplitStorage(object):
     'Handles teslakit hourly data split in multiple netCDF4 files'
 
@@ -1012,7 +1007,7 @@ class SplitStorage(object):
                     safe_time=safe_time
                 )
 
-    def Load(self, vns=[], decode_times=False):
+    def Load(self, vns=[], decode_times=False, use_cftime=False):
 
         # aux netCDF4
         def read_var_nc(p, vn):
@@ -1066,9 +1061,9 @@ class SplitStorage(object):
             out[vn] = (('time',), v_v)
             out[vn].attrs = v_a
 
-        # optional decode times to cftime 
+        # optional decode times to np.datetime64 or DatetimeGregorian
         if decode_times:
-            out = xr.decode_cf(out, use_cftime=True)
+            out = xr.decode_cf(out, use_cftime=use_cftime)
 
         return out
 
@@ -1165,6 +1160,8 @@ class hyswan_db(object):
 
             'swan_projects': op.join(p_base, 'swan_projects'),
 
+            'reconstruction': op.join(p_base, 'recon.pickle'),
+
         }
 
     def __str__(self):
@@ -1179,3 +1176,4 @@ class hyswan_db(object):
 
     def Load(self, key):
         return pd.read_pickle(self.paths[key])
+

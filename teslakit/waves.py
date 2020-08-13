@@ -13,10 +13,14 @@ fast_reindex_hourly
 np.warnings.filterwarnings('ignore')
 
 
-def GetDistribution(xds_wps, swell_sectors):
+# TODO: combine GetDistribution functions (parse gow input and call GetDistribution?)
+
+def GetDistribution_gow(xds_wps, swell_sectors, n_partitions=5):
     '''
-    Separates wave partitions (0-5) into families.
+    Separates wave partitions (0-n_partitions) into families.
     Default: sea, swl1, swl2
+
+    compatible with GOW.mat file
 
     xds_wps (waves partitionss):
         xarray.Dataset (time,), phs, pspr, pwfrac... {0-5 partitions}
@@ -46,34 +50,15 @@ def GetDistribution(xds_wps, swell_sectors):
 
     # concatenate energy groups 
     cat_hs = np.column_stack(
-        (xds_wps.phs1.values,
-        xds_wps.phs2.values,
-        xds_wps.phs3.values,
-        xds_wps.phs4.values,
-        xds_wps.phs5.values )
-    )
+        [xds_wps['phs{0}'.format(i)] for i in range(1, n_partitions+1)])
     cat_tp = np.column_stack(
-        (xds_wps.ptp1.values,
-        xds_wps.ptp2.values,
-        xds_wps.ptp3.values,
-        xds_wps.ptp4.values,
-        xds_wps.ptp5.values )
-    )
+        [xds_wps['ptp{0}'.format(i)] for i in range(1, n_partitions+1)])
     cat_dir = np.column_stack(
-        (xds_wps.pdir1.values,
-        xds_wps.pdir2.values,
-        xds_wps.pdir3.values,
-        xds_wps.pdir4.values,
-        xds_wps.pdir5.values )
-    )
+        [xds_wps['pdir{0}'.format(i)] for i in range(1, n_partitions+1)])
 
     # prepare output array
     xds_fams = xr.Dataset(
         {
-            'Hs': ('time', xds_wps.hs.values[:]),
-            'Tp': ('time', xds_wps.tp.values[:]),
-            'Dir': ('time', xds_wps.dir.values[:]),
-
             'sea_Hs': ('time', sea_Hs),
             'sea_Tp': ('time', sea_Tp),
             'sea_Dir': ('time', sea_Dir),
@@ -139,131 +124,14 @@ def GetDistribution(xds_wps, swell_sectors):
     return xds_fams
 
 
-def GetDistribution_CSIRO(xds_wps, swell_sectors):
-    '''
-    Separates wave partitions (0-3) into families.
-    Default: sea, swl1, swl2
+def GetDistribution_ws(xds_wps, swell_sectors, n_partitions=5):
 
-    xds_wps (waves partitionss):
-        xarray.Dataset (time,), phs, pspr, pwfrac... {0-5 partitions}
-
-    sectors: list of degrees to cut wave energy [(a1, a2), (a2, a3), (a3, a1)]
-
-    returns
-        xarray.Dataset (time,), fam_V, {fam: sea,swell_1,swell2. V: Hs,Tp,Dir}
-    '''
-
-    # fix data
-    hs_fix_data = 50
-    for i in range(4):
-        phs = xds_wps['phs{0}'.format(i)].values
-        p_fix = np.where(phs >= hs_fix_data)[0]
-
-        # fix data
-        xds_wps['phs{0}'.format(i)][p_fix] = np.nan
-        xds_wps['ptp{0}'.format(i)][p_fix] = np.nan
-        xds_wps['pdir{0}'.format(i)][p_fix] = np.nan
-
-    # sea (partition 0)
-    sea_Hs = xds_wps['phs0'].values
-    sea_Tp = xds_wps['ptp0'].values
-    sea_Dir = xds_wps['pdir0'].values
-    time = xds_wps['time'].values
-
-    # concatenate energy groups
-    cat_hs = np.column_stack(
-        (xds_wps.phs1.values,
-        xds_wps.phs2.values,
-        xds_wps.phs3.values)
-    )
-    cat_tp = np.column_stack(
-        (xds_wps.ptp1.values,
-        xds_wps.ptp2.values,
-        xds_wps.ptp3.values)
-    )
-    cat_dir = np.column_stack(
-        (xds_wps.pdir1.values,
-        xds_wps.pdir2.values,
-        xds_wps.pdir3.values)
-    )
-
-    # prepare output array
-    xds_fams = xr.Dataset(
-        {
-            'Hs': ('time', xds_wps.hs.values[:]),
-            'Tp': ('time', xds_wps.tp.values[:]),
-            'Dir': ('time', xds_wps.dir.values[:]),
-
-            'sea_Hs': ('time', sea_Hs),
-            'sea_Tp': ('time', sea_Tp),
-            'sea_Dir': ('time', sea_Dir),
-        },
-        coords = {'time': time}
-    )
-
-    # solve sectors
-    c = 1
-    for s_ini, s_end in swell_sectors:
-        if s_ini < s_end:
-            p_sw = np.where((cat_dir <= s_end) & (cat_dir > s_ini))
-        else:
-            p_sw = np.where((cat_dir <= s_end) | (cat_dir > s_ini))
-
-        # get data inside sector
-        sect_dir = np.zeros(cat_dir.shape)*np.nan
-        sect_hs = np.zeros(cat_dir.shape)*np.nan
-        sect_tp = np.zeros(cat_dir.shape)*np.nan
-
-        sect_dir[p_sw] = cat_dir[p_sw]
-        sect_hs[p_sw] = cat_hs[p_sw]
-        sect_tp[p_sw] = cat_tp[p_sw]
-
-        # calculate swell Hs, Tp, Dir
-        swell_Hs = np.sqrt(np.nansum(np.power(sect_hs,2), axis=1))
-
-        swell_Tp = np.sqrt(
-            np.nansum(np.power(sect_hs,2), axis=1) /
-            np.nansum(np.power(sect_hs,2)/np.power(sect_tp,2), axis=1)
-        )
-        swell_Dir = np.arctan2(
-            np.nansum(np.power(sect_hs,2) * sect_tp * np.sin(sect_dir*np.pi/180), axis=1),
-            np.nansum(np.power(sect_hs,2) * sect_tp * np.cos(sect_dir*np.pi/180), axis=1)
-        )
-
-        # dir correction and denormalization
-        swell_Dir[np.where((swell_Dir<0))] = swell_Dir[np.where((swell_Dir<0))]+2*np.pi
-        swell_Dir = swell_Dir*180/np.pi
-
-        # dont do arctan2 if there is only one dir
-        i_onedir = np.where(
-            (np.count_nonzero(~np.isnan(sect_dir),axis=1)==1)
-        )[0]
-        swell_Dir[i_onedir] = np.nanmin(sect_dir[i_onedir], axis=1)
-
-        # out of bound dir correction
-        swell_Dir[np.where((swell_Dir>360))] = swell_Dir[np.where((swell_Dir>360))]-360
-        swell_Dir[np.where((swell_Dir<0))] = swell_Dir[np.where((swell_Dir<0))]+360
-
-
-        # fix swell all-nans to 0s nansum behaviour
-        p_fix = np.where(swell_Hs==0)
-        swell_Hs[p_fix] = np.nan
-        swell_Dir[p_fix] = np.nan
-
-        # append data to partitons dataset
-        xds_fams['swell_{0}_Hs'.format(c)] = ('time', swell_Hs)
-        xds_fams['swell_{0}_Tp'.format(c)] = ('time', swell_Tp)
-        xds_fams['swell_{0}_Dir'.format(c)] = ('time', swell_Dir)
-        c+=1
-
-    return xds_fams
-
-
-def GetDistribution_ws(xds_wps, swell_sectors):
     '''
     Separates wave partitions (0-5) into families.
     Default: sea, swl1, swl2
 
+    Compatible with wavespectra partitions
+
     xds_wps (waves partitionss):
         xarray.Dataset (time,), phs, pspr, pwfrac... {0-5 partitions}
 
@@ -273,41 +141,34 @@ def GetDistribution_ws(xds_wps, swell_sectors):
         xarray.Dataset (time,), fam_V, {fam: sea,swell_1,swell2. V: Hs,Tp,Dir}
     '''
 
-    sea_Hs= xds_wps.isel(part=0).hs.values
-    sea_Tp=xds_wps.isel(part=0).tp.values
+    # sea (partition 0)
+    sea_Hs = xds_wps.isel(part=0).hs.values
+    sea_Tp = xds_wps.isel(part=0).tp.values
     sea_Dir = xds_wps.isel(part=0).dpm.values
-    time= xds_wps.time.values
+    time = xds_wps.time.values
+
+    # fix sea all-nans to 0s nansum behaviour
+    p_fix = np.where(sea_Hs==0)
+    sea_Hs[p_fix] = np.nan
+    sea_Tp[p_fix] = np.nan
+    sea_Dir[p_fix] = np.nan
 
     # concatenate energy groups 
     cat_hs = np.column_stack(
-        (xds_wps.isel(part=1).hs.values,
-        xds_wps.isel(part=2).hs.values,
-        xds_wps.isel(part=3).hs.values,
-        xds_wps.isel(part=4).hs.values,
-        xds_wps.isel(part=5).hs.values)
-    )
+        [xds_wps.isel(part=i).hs.values for i in range(1, n_partitions+1)])
     cat_tp = np.column_stack(
-        (xds_wps.isel(part=1).tp.values,
-        xds_wps.isel(part=2).tp.values,
-        xds_wps.isel(part=3).tp.values,
-        xds_wps.isel(part=4).tp.values,
-        xds_wps.isel(part=5).tp.values)
-    )
+        [xds_wps.isel(part=i).tp.values for i in range(1, n_partitions+1)])
     cat_dir = np.column_stack(
-        (xds_wps.isel(part=1).dpm.values,
-        xds_wps.isel(part=2).dpm.values,
-        xds_wps.isel(part=3).dpm.values,
-        xds_wps.isel(part=4).dpm.values,
-        xds_wps.isel(part=5).dpm.values)
-    )
+        [xds_wps.isel(part=i).dpm.values for i in range(1, n_partitions+1)])
 
     # prepare output array
-    xds_parts = xr.Dataset({
-        'sea_Hs':('time',sea_Hs),
-        'sea_Tp':('time',sea_Tp),
-        'sea_Dir':('time',sea_Dir)
-    },
-        coords = {'time':time}
+    xds_fams = xr.Dataset(
+        {
+            'sea_Hs': ('time', sea_Hs),
+            'sea_Tp': ('time', sea_Tp),
+            'sea_Dir': ('time', sea_Dir),
+        },
+        coords = {'time': time}
     )
 
     # solve sectors
@@ -357,15 +218,16 @@ def GetDistribution_ws(xds_wps, swell_sectors):
         # fix swell all-nans to 0s nansum behaviour
         p_fix = np.where(swell_Hs==0)
         swell_Hs[p_fix] = np.nan
+        swell_Tp[p_fix] = np.nan
         swell_Dir[p_fix] = np.nan
 
         # append data to partitons dataset
-        xds_parts['swell_{0}_Hs'.format(c)] = ('time', swell_Hs)
-        xds_parts['swell_{0}_Tp'.format(c)] = ('time', swell_Tp)
-        xds_parts['swell_{0}_Dir'.format(c)] = ('time', swell_Dir)
+        xds_fams['swell_{0}_Hs'.format(c)] = ('time', swell_Hs)
+        xds_fams['swell_{0}_Tp'.format(c)] = ('time', swell_Tp)
+        xds_fams['swell_{0}_Dir'.format(c)] = ('time', swell_Dir)
         c+=1
 
-    return xds_parts
+    return xds_fams
 
 def AWL(hs, tp):
     'Returns Atmospheric Water Level'
@@ -556,4 +418,121 @@ def Intradaily_Hydrograph(xds_wvs, xds_tcs):
     xds_wvs_h['SS'] =(('time',), hourly_ss)
 
     return xds_wvs_h
+
+
+# --------------------------------------
+
+# TODO check / refactor 
+import math
+def dispersionLonda(T, h):
+    L1 = 1
+    L2 = ((9.81*T**2)/(2*np.pi))*math.tanh(h*2*np.pi/L1)
+    umbral = 2
+
+    while(umbral>0.1):
+        L2 = ((9.81*T**2)/(2*np.pi))*math.tanh(h*2*np.pi/L1)
+        umbral = abs(L2-L1)
+        L1 = L2
+
+    L = L2
+    k = (2*np.pi)/L
+    c = np.sqrt(9.8*np.tanh(k*h)/k)
+    return L, k, c
+
+def Snell_Propagation(T, H_I, dir_I, Prof_I, Prof_E, OrientBati):
+    '''
+    [H_E,dir_E]=PropagacionSNELL(T,H_I,dir_I,Prof_I,Prof_E,OrientBati)
+    [H_E,dir_E,L_E,L_I]=PropagacionSNELL(T,H_I,dir_I,Prof_I,Prof_E,OrientBati)
+    [H_E,dir_E,L_E,L_I,Ks,Kr]=PropagacionSNELL(T,H_I,dir_I,Prof_I,Prof_E,OrientBati)
+
+    Descripci?n: Funci?n que propaga el oleaje por SNELL con batimetr?a recta
+    y paralela.
+
+    Entradas:
+      T: Periodo.                                        Segundos.
+      H_I: Altura de ola en el punto inicial.            Metros.
+      dir_I: Direcci?n del oleaje inicial.               Rumbo (0 en el N)
+      prof_I: Profundidad inicial.                       Metros.
+      prof_E: Profundidad final.                         Metros.
+      OrientBati: Orientaci?n de la perpendicular a la batimetria. Rumbo (0 en el N)
+
+    Salidas:
+      H_E: Altura de ola en el punto final.              Metros.
+      dir_E: Direccion del oleaje final.                 Rumbo (0 en el N)
+      L_E: Longitud de onda final.                       Metros
+      L_I: Longitud de onda inicial.                     Metros
+      Ks: Coeficiente de asomeramiento (shoaling).
+      Kr: Coeficiente de refraccion (Snell batimetria recta y paralela).
+
+
+     Autor:
+
+
+       Versi?n:Ene/19
+
+     Basada en el script de:
+     Soledad Requejo Landeira &   Jos? Antonio ?lvarez Antol?nez
+    '''
+
+    # Establece el angulo relativo entre el oleaje y la batimetria
+    Teta_I = dir_I - OrientBati
+
+    # Fija el angulo relativo entre -90 y 90 grados
+    posd1 = np.where(Teta_I < -90)
+    Teta_I[posd1[0]] = Teta_I[posd1[0]] + 360
+
+    posd2 = np.where(Teta_I > 90)
+    Teta_I[posd2[0]] = Teta_I[posd2[0]] - 360
+
+    # obligamos que el angulo este en este sector
+    Teta_I[np.where(Teta_I > 90)[0]] = 90
+    Teta_I[np.where(Teta_I < -90)[0]] = -90
+
+    # Resolucion de la ec. de dispersion en la profundidad de partida y 
+    # en la objetivo y calculo de las celeridades de grupo correspondientes
+    L_I = []
+    k_I = []
+    c_I = []
+    Cg_I = []
+
+    L_E = []
+    k_E = []
+    c_E = []
+    Cg_E = []
+
+    for i in range(len(T)):
+        [a,b,c] = dispersionLonda(T[i],Prof_I)
+        L_I.append(a)
+        k_I.append(b)
+        c_I.append(c)
+        Cg_I.append((c/2)*(1+((2*b*Prof_I)/(np.sinh(2*b*Prof_I)))))
+
+        [d,e,f] = dispersionLonda(T[i],Prof_E)
+        L_E.append(d)
+        k_E.append(e)
+        c_E.append(f)
+        Cg_E.append((f/2)*(1+((2*e*Prof_E)/(np.sinh(2*e*Prof_E)))))
+
+
+    dir_E = []
+    Teta_E = []
+    Ks = []
+    Kr = []
+    for i in range(len(Cg_E)):
+        H = math.asin((k_I[i]*np.sin(np.deg2rad(Teta_I[i])))/k_E[i])
+        Teta_E.append(np.rad2deg(H))
+        dir_E.append(np.rad2deg(H) + OrientBati)
+        Ks.append(np.sqrt(Cg_I[i]/Cg_E[i]))
+        Kr.append(np.sqrt(np.cos(np.deg2rad(Teta_I[i]))/np.cos(H)))
+
+    for i in range(len(dir_E)):
+        if dir_E[i] < 0:
+            dir_E[i] = dir_E[i] + 360
+        if dir_E[i] >=360:
+            dir_E[i] = dir_E[i] -360
+
+    # Altura de ola final
+    H_E = H_I*Kr*Ks
+
+    return H_E, dir_E, Ks, Kr
 

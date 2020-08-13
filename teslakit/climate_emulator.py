@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy.special import ndtri  # norm inv
-from scipy.stats import  genextreme, gumbel_l, spearmanr, norm
+from scipy.stats import  genextreme, gumbel_l, spearmanr, norm, weibull_min
 from statsmodels.distributions.empirical_distribution import ECDF
 from numpy.random import choice, multivariate_normal, randint, rand
 
@@ -29,7 +29,6 @@ def tqdm(*args, **kwargs):
 
 # tk
 from .statistical import Empirical_ICDF
-from .waves import AWL
 from .extremes import FitGEV_KMA_Frechet, Smooth_GEV_Shape, ACOV
 from .io.aux_nc import StoreBugXdset
 
@@ -38,11 +37,28 @@ from .plotting.extremes import Plot_GEVParams, Plot_ChromosomesProbs, \
         Plot_SigmaCorrelation
 
 
-# TODO: LOG, introducir switch log on / log off para ejecuciones silenciosas
-# TODO: optimizar simulacion waves
-
 class Climate_Emulator(object):
-    'KMA - DWTs Climate Emulator'
+    '''
+    KMA - DWTs Climate Emulator
+
+    Fit Waves extremes model (GEV, Gumbel, Weibull distributions) and DWTs series
+    Simulate (probabilistic) a new dataset of Waves from a custom DWTs series
+
+    This custom emulator uses Waves data divided by families (sea, swell_1,
+    swell_2, ...), each family is defined by 3 variables: Hs, Tp, Dir
+
+
+    Some configuration parameters:
+
+    A chromosomes methodology for statistical fit is available, it will handle
+    on/off probabilities for each different waves family combination.
+
+    Aditional variables, outside of waves families, can be given to the emulator.
+
+    A variable has to be selected as the PROXY to calculate storms max. (default: AWL)
+
+    User can manually set a variable for an empircal / weibull / gev distribution.
+    '''
 
     def __init__(self, p_base):
 
@@ -59,12 +75,15 @@ class Climate_Emulator(object):
         self.sigma = None           # Pearson sigma correlation
 
         # chromosomes
+        self.do_chrom = True        # True for chromosomes combinations methodology
         self.chrom = None           # chromosomes and chromosomes probs
 
         # waves families and variables related aprameters
         self.fams = []              # waves families to use in emulator
         self.vars_GEV = []          # variables handled with GEV fit
-        self.vars_EMP = []          # varibles handled with empirical fit
+        self.vars_EMP = []          # varibles handled with Empirical fit
+        self.vars_WBL = []          # varibles handled with Weibull fit
+        self.extra_variables = []   # extra variables to use in emulator (no waves families)
 
         # paths
         self.p_base      = p_base
@@ -87,59 +106,99 @@ class Climate_Emulator(object):
 
     def ConfigVariables(self, config):
         '''
-        Set wich waves families variables will be handled with GEV or EMP
+        Set waves families names
+        Set optional extra variables names
+        Set variables distribution: GEV, Empirical, Weibull
+        Activate / Deactivate chromosomes methodology (if False, all-on combo)
 
         config = {
-            'name_fams': ['sea', 'swell_1', ...]
-            'force_empirical': ['swell_2_Tp', 'swell_3_Hs', ...]
+            'waves_families': ['sea', 'swell_1', ...],
+            'extra_variables': ['wind', 'slp', ...]
+            'distribution': [
+                ('sea_Tp', 'Empirical'),
+                ('wind', 'Weibull'),
+                ...
+            },
+            'do_chromosomes': True,
         }
         '''
 
         # get data from config dict
-        fams = config['name_fams']  # waves families to use
-        force_empircal = config['force_empirical']
+        fams = config['waves_families']  # waves families to use
 
-        # Hs, Tp, Dir separated by GEV / EMPIRICAL
+        # variables lists for each distribution
+        l_GEV_vars = []  # GEV
+        l_EMP_vars = []  # Empirical
+        l_WBL_vars = []  # Weibull
+
+        # Default Hs, Tp, Dir distributions 
         GEV_vn = ['Hs', 'Tp']
         EMP_vn = ['Dir']
 
         # mount family_variable lists
-        l_GEV_vars = []
-        l_EMP_vars = []
         for f in fams:
             for v in GEV_vn:
                 l_GEV_vars.append('{0}_{1}'.format(f,v))
             for v in EMP_vn:
                 l_EMP_vars.append('{0}_{1}'.format(f,v))
 
-        # force empirical
-        for vf in force_empircal:
-            if vf in l_GEV_vars:
-                l_GEV_vars.pop(l_GEV_vars.index(vf))
-            if vf not in l_EMP_vars:
-                l_EMP_vars.append(vf)
+        # now add extra variables to GEV list
+        if 'extra_variables' in config.keys():
+            for vn in config['extra_variables']:
+                l_GEV_vars.append('{0}'.format(vn))
 
-        # set properties
+            # update extra variables parameter
+            self.extra_variables = config['extra_variables']
+
+
+        # set custom distribution choices 
+        if 'distribution' in config.keys():
+            for vn, vd in config['distribution']:
+
+                # clean variable default distribution
+                if vn in l_GEV_vars: l_GEV_vars.pop(l_GEV_vars.index(vn))
+                if vn in l_EMP_vars: l_EMP_vars.pop(l_EMP_vars.index(vn))
+
+                # now asign variable new distribution
+                if vd == 'GEV': l_GEV_vars.append(vn)
+                elif vd == 'Empirical': l_EMP_vars.append(vn)
+                elif vd == 'Weibull': l_WBL_vars.append(vn)
+
+        # chromosomes combination methodology option
+        if 'do_chromosomes' in config.keys():
+            self.do_chrom = config['do_chromosomes']
+
+        # store configuration: families, variables distribution lists
         self.fams = fams
         self.vars_GEV = l_GEV_vars
         self.vars_EMP = l_EMP_vars
+        self.vars_WBL = l_WBL_vars
 
-    def FitExtremes(self, KMA, WVS, config):
+        # log
+        print('Waves Families: {0}'.format(self.fams))
+        print('Extra Variables: {0}'.format(self.extra_variables))
+        print('GEV distribution: {0}'.format(self.vars_GEV))
+        print('Empirical distribution: {0}'.format(self.vars_EMP))
+        print('Weibull distribution: {0}'.format(self.vars_WBL))
+        print('Do chromosomes combinations: {0}'.format(self.do_chrom))
+
+    def FitExtremes(self, KMA, WVS, config, proxy = 'AWL'):
         '''
         GEV extremes fitting.
         Input data (waves vars series and bmus) shares time dimension
 
-        KMA        - xarray.Dataset, vars: bmus (time,), cenEOFs(n_clusters,n_features)
-        WVS        - xarray.Dataset: (time,), Hs, Tp, Dir,
-                                    (time,), fam_V, {fam: sea,swell_1,swell2. V: Hs,Tp,Dir}
-        config     - dictionary: name_fams, force_empirical
+        KMA        - xarray.Dataset, vars: bmus (time,), cenEOFs(n_clusters, n_features)
+        WVS        - xarray.Dataset: (time,), Hs, Tp, Dir, TC_category
+                                     (time,), fam_V, {fam: sea, swell_1, ... V: Hs, Tp, Dir}
+                                     (time,), extra_var1, extra_var2, ...
+        config     - configuration dictionary: view self.ConfigVariables()
+        proxy      - variable used to get DWTs max. storms (default AWL).
+                     proxy variable has to be inside WVS xarray.Dataset
         '''
 
         # configure waves fams variables parameters from config dict
         self.ConfigVariables(config)
-
-        # get start and end dates for each storm
-        lt_storm_dates = self.Calc_StormsDates(KMA)
+        print('Max. Storms PROXY: {0}'.format(proxy))
 
         # store TCs WTs waves
         WVS_TCs = WVS.where(~np.isnan(WVS.TC_category), drop=True)
@@ -147,27 +206,38 @@ class Climate_Emulator(object):
         # TODO select waves without TCs ?
         #WVS = WVS.where(np.isnan(WVS.TC_category), drop=True)
 
-        # calculate max. AWL for each storm
-        ms_AWL = self.Calc_StormsMaxTWL(WVS.Hs, WVS.Tp, lt_storm_dates)
+        # get start and end dates for each storm
+        lt_storm_dates = self.Calc_StormsDates(KMA)
 
-        # select waves at storms max. AWL 
-        ms_WVS = WVS.sel(time = ms_AWL.time)
-        ms_WVS['AWL'] = ms_AWL.AWL
+        # calculate max. PROXY variable for each storm
+        ms_PROXY = self.Calc_StormsMaxProxy(WVS[proxy], lt_storm_dates)
 
-        # reindex KMA, then select KMA data at storms max. AWL 
+        # select waves at storms max.
+        ms_WVS = WVS.sel(time = ms_PROXY.time)
+        ms_WVS[proxy] = ms_PROXY
+
+        # reindex KMA, then select KMA data at storms max.
         KMA_rs = KMA.reindex(time = WVS.time, method='pad')
-        ms_KMA = KMA_rs.sel(time = ms_AWL.time)
-
-        # calculate chromosomes and probabilities
-        chromosomes = self.Calc_Chromosomes(ms_KMA, ms_WVS)
+        ms_KMA = KMA_rs.sel(time = ms_PROXY.time)
 
         # GEV: Fit each wave family to a GEV distribution (KMA bmus)
         GEV_Par = self.Calc_GEVParams(ms_KMA, ms_WVS)
 
-        # Calculate sigma spearman for each KMA - fams chromosome
-        d_sigma = self.Calc_SigmaCorrelation(
-            ms_KMA, ms_WVS, GEV_Par
-        )
+        # chromosomes combinations methodology
+        if self.do_chrom:
+
+            # calculate chromosomes and probabilities
+            chromosomes = self.Calc_Chromosomes(ms_KMA, ms_WVS)
+
+            # Calculate sigma spearman for each KMA - fams chromosome
+            d_sigma = self.Calc_SigmaCorrelation(ms_KMA, ms_WVS, GEV_Par)
+
+        else:
+            # only one chromosome combination: all - on
+            chromosomes = self.AllOn_Chromosomes(ms_KMA)
+
+            # Calculate sigma spearman for each KMA (all chromosomes on)
+            d_sigma = self.Calc_SigmaCorrelation_AllOn_Chromosomes(ms_KMA, ms_WVS, GEV_Par)
 
         # store data
         self.WVS_MS = ms_WVS
@@ -200,7 +270,7 @@ class Climate_Emulator(object):
 
         # store config
         pickle.dump(
-            (self.fams, self.vars_GEV, self.vars_EMP),
+            (self.fams, self.vars_GEV, self.vars_EMP, self.vars_WBL, self.extra_variables),
             open(self.p_config, 'wb')
         )
 
@@ -232,7 +302,7 @@ class Climate_Emulator(object):
         self.sigma = pickle.load(open(self.p_GEV_Sigma, 'rb'))
 
         # load config
-        self.fams, self.vars_GEV, self.vars_EMP = pickle.load(
+        self.fams, self.vars_GEV, self.vars_EMP, self.vars_WBL, self.extra_variables = pickle.load(
             open(self.p_config, 'rb')
         )
 
@@ -257,7 +327,7 @@ class Climate_Emulator(object):
 
         return WVS_sim, TCs_sim, WVS_upd
 
-    def LoadSim_All(self, n_sim_ce=0):
+    def LoadSim_All(self, n_sim_ce=0, TCs=True):
         '''
         Load all waves and TCs (1 DWT -> 1 output) simulations.
 
@@ -267,6 +337,8 @@ class Climate_Emulator(object):
         output will merge WVS_upd and TCs_sim data variables
 
         a unique n_sim_ce (inner climate emulator simulation) has to be chosen.
+
+        TCs - True / False. Load WVS (TCs updated) + TCs / WVS (without TCs) simulations
         '''
 
         # count available waves simulations
@@ -275,11 +347,22 @@ class Climate_Emulator(object):
         # iterate over simulations
         l_sims = []
         for n in range(n_sims_DWTs):
-            _, TCs_sim, WVS_upd = self.LoadSim(n_sim = n)
 
-            pd_sim = xr.merge(
-                [WVS_upd.isel(n_sim = n_sim_ce), TCs_sim.isel(n_sim = n_sim_ce)]
-            ).to_dataframe()
+            if TCs:
+                # Load simulated Waves (TCs updated) and TCs
+                _, TCs_sim, WVS_upd = self.LoadSim(n_sim = n)
+
+                pd_sim = xr.merge(
+                    [WVS_upd.isel(n_sim = n_sim_ce), TCs_sim.isel(n_sim = n_sim_ce)]
+                ).to_dataframe()
+
+            else:
+                # Load simulated Waves (without TCs)
+                WVS_sim, _, _ = self.LoadSim(n_sim = n)
+
+                pd_sim = WVS_sim.isel(n_sim = n_sim_ce).to_dataframe()
+
+            # add columns
             pd_sim['n_sim'] = n  # store simulation index with data
             pd_sim['time'] = pd_sim.index  # store dates as a variable
 
@@ -327,33 +410,25 @@ class Climate_Emulator(object):
 
         return dates_tup_WT
 
-    def Calc_StormsMaxTWL(self, wvs_hs, wvs_tp, lt_storm_dates):
-        'Returns xarray.Dataset with max. AWL value and time'
+    def Calc_StormsMaxProxy(self, wvs_PROXY, lt_storm_dates):
+        'Returns xarray.Dataset with max. PROXY variable value and time'
 
-        # Get AWL from waves partitions data 
-        wvs_AWL = AWL(wvs_hs, wvs_tp)
-
-        # find max TWL inside each storm
-        ms_AWL = []
+        # find max PROXY inside each storm
+        ms_PROXY = []
         ms_times = []
         for d1, d2 in lt_storm_dates:
 
             # get TWL inside WT window
-            wt_AWL = wvs_AWL.sel(time = slice(d1, d2 + np.timedelta64(23,'h')))[:]
+            wt_PROXY = wvs_PROXY.sel(time = slice(d1, d2 + np.timedelta64(23,'h')))[:]
 
             # get window maximum TWL date
-            wt_AWL_max = wt_AWL.where(wt_AWL==wt_AWL.max(), drop=True).squeeze()
+            wt_PROXY_max = wt_PROXY.where(wt_PROXY==wt_PROXY.max(), drop=True).squeeze()
 
             # append data
-            ms_AWL.append(wt_AWL_max.values)
-            ms_times.append(wt_AWL_max.time.values)
+            ms_PROXY.append(wt_PROXY_max.values)
+            ms_times.append(wt_PROXY_max.time.values)
 
-        return xr.Dataset(
-            {
-                'AWL': (('time',), ms_AWL),
-            },
-            coords = {'time': ms_times}
-        )
+        return wvs_PROXY.sel(time=ms_times)
 
     def Calc_GEVParams(self, xds_KMA_MS, xds_WVS_MS):
         '''
@@ -435,37 +510,33 @@ class Climate_Emulator(object):
             }
         )
 
-    def norm_GEV_or_EMP(self, vn, vv, xds_GEV_Par, d_shape, i_wt):
+    def AllOn_Chromosomes(self, xds_KMA_MS):
         '''
-        Switch function
-        Check climate emulator config and calculate NORM for the variable (GEV / EMPIRICAL)
+        Generate Fake chromosomes and probabilities from KMA.bmus data in order
+        to use only all-on chromosome combination
 
-        vn - var name
-        vv - var value
-        i_wt - Weather Type index
-        xds_GEV_Par , d_shape: GEV data used in sigma correlation
+        Returns xarray.Dataset vars: chrom, chrom_probs. dims: WT, wave_family
         '''
 
-        # get GEV and EMPIRICAL variables list
-        vars_GEV = self.vars_GEV
-        vars_EMP = self.vars_EMP
+        bmus = xds_KMA_MS.bmus.values[:]
+        n_clusters = len(xds_KMA_MS.n_clusters)
+        fams_chrom = self.fams
 
-        # switch variable name
-        if vn in vars_GEV:
+        # fake chromosomes and probabilities
+        chrom = np.ones((1, len(fams_chrom)))
+        probs = np.ones((n_clusters ,1))
 
-            # gev CDF
-            sha_g = d_shape[vn][i_wt]
-            loc_g = xds_GEV_Par.sel(parameter='location')[vn].values[i_wt]
-            sca_g = xds_GEV_Par.sel(parameter='scale')[vn].values[i_wt]
-            norm_VV = genextreme.cdf(vv, -1*sha_g, loc_g, sca_g)
-
-        elif vn in vars_EMP:
-
-            # empirical CDF
-            ecdf = ECDF(vv)
-            norm_VV = ecdf(vv)
-
-        return norm_VV
+        # chromosomes dataset
+        return xr.Dataset(
+            {
+                'chrom': (('n','wave_family',), chrom),
+                'probs': (('WT','n',), probs),
+            },
+            coords = {
+                'WT': np.arange(n_clusters)+1,
+                'wave_family': fams_chrom,
+            }
+        )
 
     def Calc_SigmaCorrelation(self, xds_KMA_MS, xds_WVS_MS, xds_GEV_Par):
         'Calculate Sigma Pearson correlation for each WT-chromosome combo'
@@ -474,6 +545,7 @@ class Climate_Emulator(object):
         cenEOFs = xds_KMA_MS.cenEOFs.values[:]
         n_clusters = len(xds_KMA_MS.n_clusters)
         wvs_fams = self.fams
+        vars_extra = self.extra_variables
         vars_GEV = self.vars_GEV
 
         # smooth GEV shape parameter 
@@ -517,8 +589,8 @@ class Climate_Emulator(object):
                 # select waves chrom data 
                 xds_chr_wvs = xds_K_wvs.isel(time=p_c)
 
-                # solve normal inverse GEV/EMP CDF for each active chromosome
-                to_corr = np.empty((0,len(p_c)))  # append for spearman correlation
+                # solve normal inverse GEV/EMP/WBL CDF for each active chromosome
+                to_corr = np.empty((0, len(p_c)))  # append for spearman correlation
                 for i_c in np.where(uc==1)[0]:
 
                     # get wave family chromosome variables
@@ -532,15 +604,15 @@ class Climate_Emulator(object):
                     vv_Dir = xds_chr_wvs[vn_Dir].values[:]
 
                     # Hs 
-                    norm_Hs = self.norm_GEV_or_EMP(
+                    norm_Hs = self.CDF_Distribution(
                         vn_Hs, vv_Hs, xds_GEV_Par, d_shape, iwt)
 
                     # Tp 
-                    norm_Tp = self.norm_GEV_or_EMP(
+                    norm_Tp = self.CDF_Distribution(
                         vn_Tp, vv_Tp, xds_GEV_Par, d_shape, iwt)
 
                     # Dir 
-                    norm_Dir = self.norm_GEV_or_EMP(
+                    norm_Dir = self.CDF_Distribution(
                         vn_Dir, vv_Dir, xds_GEV_Par, d_shape, iwt)
 
                     # normal inverse CDF 
@@ -551,6 +623,16 @@ class Climate_Emulator(object):
                     # concatenate data for correlation
                     to_corr = np.concatenate((to_corr, inv_n.T), axis=0)
 
+                # concatenate extra variables for correlation
+                for vn in vars_extra:
+                    vv = xds_chr_wvs[vn].values[:]
+
+                    norm_vn = self.CDF_Distribution(vn, vv, xds_GEV_Par, d_shape, iwt)
+                    norm_vn[norm_vn>=1.0] = 0.999999
+
+                    inv_n = ndtri(norm_vn)
+                    to_corr = np.concatenate((to_corr, inv_n[:, None].T), axis=0)
+
                 # sigma: spearman correlation
                 corr, pval = spearmanr(to_corr, axis=1)
 
@@ -558,6 +640,90 @@ class Climate_Emulator(object):
                 d_sigma[c][ucix] = {
                     'corr': corr, 'data': len(p_c), 'wt_crom': wt_crom
                 }
+
+        return d_sigma
+
+    def Calc_SigmaCorrelation_AllOn_Chromosomes(self, xds_KMA_MS, xds_WVS_MS, xds_GEV_Par):
+        'Calculate Sigma Pearson correlation for each WT, all on chrom combo'
+
+        bmus = xds_KMA_MS.bmus.values[:]
+        cenEOFs = xds_KMA_MS.cenEOFs.values[:]
+        n_clusters = len(xds_KMA_MS.n_clusters)
+        wvs_fams = self.fams
+        vars_extra = self.extra_variables
+        vars_GEV = self.vars_GEV
+
+        # smooth GEV shape parameter 
+        d_shape = {}
+        for vn in vars_GEV:
+            sh_GEV = xds_GEV_Par.sel(parameter='shape')[vn].values[:]
+            d_shape[vn] = Smooth_GEV_Shape(cenEOFs, sh_GEV)
+
+        # Get sigma correlation for each KMA cluster 
+        d_sigma = {}  # nested dict [WT][crom]
+        for iwt in range(n_clusters):
+            c = iwt+1
+            pos = np.where((bmus==c))[0]
+            d_sigma[c] = {}
+
+            # current cluster waves
+            xds_K_wvs = xds_WVS_MS.isel(time=pos)
+
+            # append data for spearman correlation
+            to_corr = np.empty((0, len(xds_K_wvs.time)))
+
+            # solve normal inverse GEV/EMP/WBL CDF for each waves family 
+            for fam_n in wvs_fams:
+
+                # get wave family variables
+                vn_Hs = '{0}_Hs'.format(fam_n)
+                vn_Tp = '{0}_Tp'.format(fam_n)
+                vn_Dir = '{0}_Dir'.format(fam_n)
+
+                vv_Hs = xds_K_wvs[vn_Hs].values[:]
+                vv_Tp = xds_K_wvs[vn_Tp].values[:]
+                vv_Dir = xds_K_wvs[vn_Dir].values[:]
+
+                # fix fams nan: Hs 0, Tp mean, dir mean
+                p_nans = np.where(np.isnan(vv_Hs))[0]
+                vv_Hs[p_nans] = 0
+                vv_Tp[p_nans] = np.nanmean(vv_Tp)
+                vv_Dir[p_nans] = np.nanmean(vv_Dir)
+
+                # Hs 
+                norm_Hs = self.CDF_Distribution(vn_Hs, vv_Hs, xds_GEV_Par, d_shape, iwt)
+
+                # Tp 
+                norm_Tp = self.CDF_Distribution(vn_Tp, vv_Tp, xds_GEV_Par, d_shape, iwt)
+
+                # Dir 
+                norm_Dir = self.CDF_Distribution(vn_Dir, vv_Dir, xds_GEV_Par, d_shape, iwt)
+
+                # normal inverse CDF 
+                u_cdf = np.column_stack([norm_Hs, norm_Tp, norm_Dir])
+                u_cdf[u_cdf>=1.0] = 0.999999
+                inv_n = ndtri(u_cdf)
+
+                # concatenate data for correlation
+                to_corr = np.concatenate((to_corr, inv_n.T), axis=0)
+
+            # concatenate extra variables for correlation
+            for vn in vars_extra:
+                vv = xds_K_wvs[vn].values[:]
+
+                norm_vn = self.CDF_Distribution(vn, vv, xds_GEV_Par, d_shape, iwt)
+                norm_vn[norm_vn>=1.0] = 0.999999
+
+                inv_n = ndtri(norm_vn)
+                to_corr = np.concatenate((to_corr, inv_n[:, None].T), axis=0)
+
+            # sigma: spearman correlation
+            corr, pval = spearmanr(to_corr, axis=1)
+
+            # store data at dict (keep cromosomes structure)
+            d_sigma[c][0] = {
+                'corr': corr, 'data': len(xds_K_wvs.time), 'wt_crom': 1
+            }
 
         return d_sigma
 
@@ -628,7 +794,6 @@ class Climate_Emulator(object):
 
                     # GUMBELL Loglikelihood function acov
                     theta = (loc[i], sca[i])
-                    # TODO comprobar gumbel_l acov y evlike acov son similares
                     acov = ACOV(gumbel_l.nnlf, theta, var_wvs)
 
                     # GUMBELL params used for multivar. normal random generation
@@ -641,8 +806,6 @@ class Climate_Emulator(object):
 
                 # GEV WTs: parameters sampling
                 else:
-                    # TODO: signo acov correcto?
-                    # TODO: PARECE QUE ACOV NO FUNCIONA SIEMPRE, NLOGL inf
 
                     # GEV Loglikelihood function acov
                     theta = (sha[i], loc[i], sca[i])
@@ -674,6 +837,8 @@ class Climate_Emulator(object):
         n_sims           - number of simulations to compute
         filters          - filter simulated waves by hs, tp, and/or wave setpness
         '''
+
+        # TODO can optimize?
 
         # max. storm waves and KMA
         xds_KMA_MS = self.KMA_MS
@@ -758,10 +923,50 @@ class Climate_Emulator(object):
 
         return TCs_sim, WVS_upd
 
-    def icdf_GEV_or_EMP(self, vn, vv, pb, xds_GEV_Par, i_wt):
+    def CDF_Distribution(self, vn, vv, xds_GEV_Par, d_shape, i_wt):
         '''
-        Switch function
-        Check climate emulator config and calculate ICDF for the variable (GEV / EMPIRICAL)
+        Switch function: GEV / Empirical / Weibull
+
+        Check variable distribution and calculates CDF
+
+        vn - var name
+        vv - var value
+        i_wt - Weather Type index
+        xds_GEV_Par , d_shape: GEV data used in sigma correlation
+        '''
+
+        # get GEV / EMPIRICAL / WEIBULL variables list
+        vars_GEV = self.vars_GEV
+        vars_EMP = self.vars_EMP
+        vars_WBL = self.vars_WBL
+
+        # switch variable name
+        if vn in vars_GEV:
+
+            # gev CDF
+            sha_g = d_shape[vn][i_wt]
+            loc_g = xds_GEV_Par.sel(parameter='location')[vn].values[i_wt]
+            sca_g = xds_GEV_Par.sel(parameter='scale')[vn].values[i_wt]
+            norm_VV = genextreme.cdf(vv, -1*sha_g, loc_g, sca_g)
+
+        elif vn in vars_EMP:
+
+            # empirical CDF
+            ecdf = ECDF(vv)
+            norm_VV = ecdf(vv)
+
+        elif vn in vars_WBL:
+
+            # Weibull CDF
+            norm_VV = weibull_min.cdf(vv, *weibull_min.fit(vv))
+
+        return norm_VV
+
+    def ICDF_Distribution(self, vn, vv, pb, xds_GEV_Par, i_wt):
+        '''
+        Switch function: GEV / Empirical / Weibull
+
+        Check variable distribution and calculates ICDF
 
         vn - var name
         vv - var value
@@ -770,12 +975,13 @@ class Climate_Emulator(object):
         xds_GEV_Par: GEV parameters
         '''
 
-        # get GEV and EMPIRICAL variables list
+        # get GEV / EMPIRICAL / WEIBULL variables list
         vars_GEV = self.vars_GEV
         vars_EMP = self.vars_EMP
+        vars_WBL = self.vars_WBL
 
         # switch variable name
-        if vn in vars_GEV and not vn =='sea_Tp':
+        if vn in vars_GEV:
 
             # gev ICDF
             sha_g = xds_GEV_Par.sel(parameter='shape')[vn].values[i_wt]
@@ -787,6 +993,11 @@ class Climate_Emulator(object):
 
             # empirical ICDF
             ppf_VV = Empirical_ICDF(vv, pb)
+
+        elif vn in vars_WBL:
+
+            # Weibull ICDF
+            ppf_VV = weibull_min.ppf(pb, *weibull_min.fit(vv))
 
         return ppf_VV
 
@@ -814,13 +1025,16 @@ class Climate_Emulator(object):
         # filter parameters
         hs_min, hs_max = 0, 15
         tp_min, tp_max = 2, 25
-        ws_min, ws_max = 0.001, 0.06
+        ws_min, ws_max = 0, 0.06
 
         # waves families - variables (sorted for simulation output)
         wvs_fams = self.fams
         wvs_fams_vars = [
             ('{0}_{1}'.format(f,vn)) for f in wvs_fams for vn in['Hs', 'Tp', 'Dir']
             ]
+
+        # extra variables (optional)
+        vars_extra = self.extra_variables
 
         # simulate one value for each storm 
         dwt_df = np.diff(DWT)
@@ -837,7 +1051,8 @@ class Climate_Emulator(object):
         )
 
         # Simulate
-        sims_out = np.zeros((len(DWT_sim), 9))
+        srl = len(wvs_fams)*3 + len(vars_extra)  # simulation row length
+        sims_out = np.zeros((len(DWT_sim), srl))
         c = 0
         while c < len(DWT_sim):
             WT = int(DWT_sim[c])
@@ -859,12 +1074,11 @@ class Climate_Emulator(object):
 
                 # solve normal inverse CDF for each active chromosome
                 ipbs = 0  # prob_sim aux. index
-                sim_row = np.zeros(9)
+                sim_row = np.zeros(srl)
                 for i_c in np.where(crm == 1)[0]:
 
                     # random sampled GEV 
-                    # TODO hacerlo excluyente, no repetir opciones 
-                    rd = np.random.randint(0,len(xds_GEV_Par_Sampled.simulation))
+                    rd = np.random.randint(0, len(xds_GEV_Par_Sampled.simulation))
                     xds_GEV_Par = xds_GEV_Par_Sampled.isel(simulation=rd)
 
                     # get wave family chromosome variables
@@ -884,21 +1098,37 @@ class Climate_Emulator(object):
                     ipbs +=3
 
                     # Hs
-                    ppf_Hs = self.icdf_GEV_or_EMP(
+                    ppf_Hs = self.ICDF_Distribution(
                         vn_Hs, vv_Hs, pb_Hs, xds_GEV_Par, iwt)
 
                     # Tp
-                    ppf_Tp = self.icdf_GEV_or_EMP(
+                    ppf_Tp = self.ICDF_Distribution(
                         vn_Tp, vv_Tp, pb_Tp, xds_GEV_Par, iwt)
 
                     # Dir
-                    ppf_Dir = self.icdf_GEV_or_EMP(
+                    ppf_Dir = self.ICDF_Distribution(
                         vn_Dir, vv_Dir, pb_Dir, xds_GEV_Par, iwt)
 
 
                     # store simulation data
-                    is0,is1 = wvs_fams.index(fam_n)*3, (wvs_fams.index(fam_n)+1)*3
+                    is0, is1 = wvs_fams.index(fam_n)*3, (wvs_fams.index(fam_n)+1)*3
                     sim_row[is0:is1] = [ppf_Hs, ppf_Tp, ppf_Dir]
+
+                # solve normal inverse CDF for each extra variable
+                ipbs = len(wvs_fams)*3
+                for vn in vars_extra:
+
+                    # random sampled GEV 
+                    rd = np.random.randint(0, len(xds_GEV_Par_Sampled.simulation))
+                    xds_GEV_Par = xds_GEV_Par_Sampled.isel(simulation=rd)
+
+                    vv = xds_WVS_MS[vn].values[:]
+                    pb_vv = prob_sim[ipbs]
+                    ppf_vv = self.ICDF_Distribution(vn, vv, pb_vv, xds_GEV_Par, iwt)
+
+                    # store simulation data
+                    sim_row[ipbs] = ppf_vv
+                    ipbs +=1
 
             # TCs Weather Types waves generation
             else:
@@ -911,7 +1141,8 @@ class Climate_Emulator(object):
                 ri = randint(len(tws.time))
 
                 # generate sim_row with sorted waves families variables
-                sim_row = np.stack([tws[vn].values[ri] for vn in wvs_fams_vars])
+                sim_row = np.stack(
+                    [tws[vn].values[ri] for vn in wvs_fams_vars+vars_extra])
 
             # Filters
 
@@ -924,26 +1155,26 @@ class Climate_Emulator(object):
                 continue
 
             # custom "bad data" filter
-            dir_s = sim_row[2::3][crm==1]
+            dir_s = sim_row[2:len(wvs_fams)*3:3][crm==1]
             if any(v > 360.0 for v in dir_s):
                 continue
 
             # wave hs
             if filters['hs']:
-                hs_s = sim_row[0::3][crm==1]
+                hs_s = sim_row[0:len(wvs_fams)*3:3][crm==1]
                 if any(v <= hs_min for v in hs_s) or any(v >= hs_max for v in hs_s):
                     continue
 
             # wave tp
             if filters['tp']:
-                tp_s = sim_row[1::3][crm==1]
+                tp_s = sim_row[1:len(wvs_fams)*3:3][crm==1]
                 if any(v <= tp_min for v in tp_s) or any(v >= tp_max for v in tp_s):
                     continue
 
             # wave stepness 
             if filters['ws']:
-                hs_s = sim_row[0::3][crm==1]
-                tp_s = sim_row[1::3][crm==1]
+                hs_s = sim_row[0:len(wvs_fams)*3:3][crm==1]
+                tp_s = sim_row[1:len(wvs_fams)*3:3][crm==1]
                 ws_s = hs_s / (1.56 * tp_s**2 )
                 if any(v <= ws_min for v in ws_s) or any(v >= ws_max for v in ws_s):
                     continue
@@ -965,7 +1196,7 @@ class Climate_Emulator(object):
             },
             coords = {'time': DWT_time_sim}
         )
-        for c,vn in enumerate(wvs_fams_vars):
+        for c, vn in enumerate(wvs_fams_vars + vars_extra):
             xds_wvs_sim[vn] = (('time',), sims_out[:,c])
 
         return xds_wvs_sim
@@ -1095,7 +1326,7 @@ class Climate_Emulator(object):
                             mod_fam_Hs, mod_fam_Tp, mod_fam_Dir]
 
                     else:
-                        # TODO: no deberia caer aqui. comentar duda
+                        # TODO: no deberia caer aqui
                         mu_s = 0
                         ss_s = 0
                         tau_s = 0
@@ -1136,32 +1367,64 @@ class Climate_Emulator(object):
 
         return xds_TCs_sim, xds_WVS_sim_updated
 
+    def Report_Fit(self, vns_GEV=['Hs'], show=True, plot_chrom=True, plot_sigma=True):
+        '''
+        Report for extremes model fitting
 
-    def Report_Fit(self, show=True):
-        'Report for extremes model fitting'
+        - GEV parameters for vns_GEV
+        - chromosomes probabilities
+        - sigma correlation
+        '''
 
-        # get data (fams hs)
-        vars_gev_params = [x for x in self.vars_GEV if 'Hs' in x]
-        GEV_Par = self.GEV_Par
+        f_out = []
+
+        # GEV variables reports
+        for vn in vns_GEV:
+            fs = self.Report_Gev(vn=vn, show=show)
+            f_out = f_out + fs
+
+        # Chromosomes and Sigma reports
         chrom = self.chrom
         d_sigma = self.sigma
 
+        # Plot cromosomes probabilities
+        if plot_chrom:
+            f = Plot_ChromosomesProbs(chrom, show=show)
+            f_out.append(f)
+
+
+        # Plot sigma correlation triangle
+        if plot_sigma:
+            f = Plot_SigmaCorrelation(chrom, d_sigma, show=show)
+            f_out.append(f)
+
+        return f_out
+
+    def Report_Gev(self, vn='Hs', show=True):
+        'Plot vn variable GEV parameters for each WT. variables: Hs, Tp'
+
+        # GEV parameters 
+        GEV_Par = self.GEV_Par.copy(deep='True')
+
+        # locate fam_vn variables 
+        vars_gev_params = [x for x in self.vars_GEV if vn in x]
+
         f_out = []
-        # Plot GEV params for each WT
         for gvn in vars_gev_params:
             f = Plot_GEVParams(GEV_Par[gvn], show=show)
             f_out.append(f)
 
-        # Plot cromosomes probabilities
-        f = Plot_ChromosomesProbs(chrom, show=show)
-        f_out.append(f)
-
-
-        # Plot sigma correlation triangle
-        f = Plot_SigmaCorrelation(chrom, d_sigma, show=show)
-        f_out.append(f)
-
         return f_out
+
+    def Report_Sim_QQplot(self, WVS_sim, vn, n_sim=0, show=True):
+        '''
+        QQplot for variable vn
+        '''
+
+        # TODO
+        #f_out = Plot_QQplot(kma_bmus, d_sigma, show=show)
+
+        return None
 
 
 def ChromMatrix(vs):
