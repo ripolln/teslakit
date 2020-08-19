@@ -33,7 +33,7 @@ def GetDistribution_gow(xds_wps, swell_sectors, n_partitions=5):
 
     # fix data
     hs_fix_data = 50
-    for i in range(6):
+    for i in range(n_partitions+1):
         phs = xds_wps['phs{0}'.format(i)].values
         p_fix = np.where(phs >= hs_fix_data)[0]
 
@@ -59,6 +59,10 @@ def GetDistribution_gow(xds_wps, swell_sectors, n_partitions=5):
     # prepare output array
     xds_fams = xr.Dataset(
         {
+            'Hs': ('time', xds_wps.hs.values[:]),
+            'Tp': ('time', xds_wps.tp.values[:]),
+            'Dir': ('time', xds_wps.dir.values[:]),
+
             'sea_Hs': ('time', sea_Hs),
             'sea_Tp': ('time', sea_Tp),
             'sea_Dir': ('time', sea_Dir),

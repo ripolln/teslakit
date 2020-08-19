@@ -340,7 +340,7 @@ class Database(object):
         return xr.open_dataset(self.paths.site.WAVES.partitions)
 
     def Load_WAVES_partitions_CSIRO(self):
-        xds = xr.open_dataset(self.paths.site.WAVES.partitions_p1)
+        xds = xr.open_dataset(self.paths.site.WAVES.partitions)
 
         # join 2 different time periods for partitions
         for var in ['hs', 'tp', 'dir', 'spr']:
