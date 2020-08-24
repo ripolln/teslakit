@@ -121,7 +121,7 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
 
             # storm inside circle
             ix_in = np.where(geo_dist < r)[0][:]
-
+            # print(i_storm)
             # storm translation velocity
             geo_dist_ss = []
             for i_row in range(lonlat_s.shape[0]-1):
@@ -177,26 +177,40 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
 
             # more parameters 
             prs_s_in = prs[i_storm][ix_in]  # pressure
+            # print(prs_s_in)
+            # print(len(prs_s_in[~np.isnan(np.array(prs_s_in))]))
+            if len(prs_s_in[~np.isnan(np.array(prs_s_in))]) == 0:
+                continue
+            pos_in = ~np.isnan(prs_s_in)
+            prs_s_in = prs_s_in[pos_in]
+            # print(prs_s_in)
             prs_s_min = np.min(prs_s_in)  # pressure minimun
             prs_s_mean = np.mean(prs_s_in)
 
             vel_s_in = velpm[ix_in]  # velocity
+            vel_s_in = vel_s_in[pos_in]
             vel_s_mean = np.mean(vel_s_in) # velocity mean
 
             categ = GetStormCategory(prs_s_min)  # category
 
             dist_in = geo_dist[ix_in]
+            dist_in = dist_in[pos_in]
             p_dm = np.where((dist_in==np.min(dist_in)))[0]  # closest to point
 
             time_s_in = time[i_storm][ix_in]  # time
+            time_s_in = time_s_in[pos_in]
             time_closest = time_s_in[p_dm][0]  # time closest to point 
 
             # filter storms 
             # TODO: storms with only one track point inside radius. solve?
-            if np.isnan(np.array(prs_s_in)).any() or \
-               (np.array(prs_s_in) <= 860).any() or \
-               gamma == 0.0:
-                continue
+
+            # print(prs_s_in)
+            # print(vel_s_mean)
+            # print(time_s_in)
+            # if np.isnan(np.array(prs_s_in)).any() or \
+            #    (np.array(prs_s_in) <= 860).any() or \
+            #    gamma == 0.0:
+            #     continue
 
             # store parameters
             l_storms_area.append(i_storm)
@@ -217,6 +231,9 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
 
     # cut storm dataset to selection
     xds_TCs_sel = xds_TCs.isel(storm=l_storms_area)
+    # print(xds_TCs)
+    # print(l_storms_area)
+    # print(xds_TCs_sel)
     xds_TCs_sel = xds_TCs_sel.assign_coords(storm = np.array(l_storms_area))
 
     # store storms parameters 
