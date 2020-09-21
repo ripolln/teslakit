@@ -1023,7 +1023,7 @@ class Climate_Emulator(object):
         '''
 
         # filter parameters
-        hs_min, hs_max = 0, 15
+        hs_min, hs_max = 0, 8
         tp_min, tp_max = 2, 25
         ws_min, ws_max = 0, 0.06
 
@@ -1132,10 +1132,13 @@ class Climate_Emulator(object):
 
             # TCs Weather Types waves generation
             else:
-
+                # OJO! he cambiado a la variable xds_WVS_TCs para coger las olas
                 # Get TC-WT waves fams data 
                 ixtc = np.where(xds_WVS_TCs.TC_category == WT-n_clusters-1)[0]
-                tws = (xds_WVS_MS.isel(time=ixtc))
+                # print(ixtc)
+
+                tws = (xds_WVS_TCs.isel(time=ixtc))
+                # tws = (xds_WVS_MS.isel(time=ixtc))
 
                 # select random state
                 ri = randint(len(tws.time))
