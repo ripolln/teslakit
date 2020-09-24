@@ -401,13 +401,13 @@ class Database(object):
         return xds_ml, xds_at
 
     def Load_TIDE_hist_astro(self):
-        xds_at = xr.open_dataset(self.paths.site.TIDE.mareografo_nc)
+        xds_at = xr.open_dataset(self.paths.site.TIDE.hist_astro)
         xds_at = fill_metadata(xds_at)
 
         return  xds_at
 
     def Save_TIDE_hist_astro(self, xds):
-        save_nc(xds, self.paths.site.TIDE.hist_astro, True)
+        save_nc(xds, self.paths.site.TIDE.hist_astro)
 
     def Save_TIDE_sim_astro(self, xds):
         save_nc(xds, self.paths.site.TIDE.sim_astro, True)
@@ -489,7 +489,8 @@ class Database(object):
         MSL_h = MSL_h.drop_vars(['mmsl_median']).rename({'mmsl':'MMSL'})
         MSL_h['MMSL'] = MSL_h['MMSL'] / 1000.0  # mm to m
         DWT_h = DWT_h.rename({'bmus':'DWT'})
-        ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
+        # ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
+        ATD_h = ATD_h.drop_vars(['WaterLevels','Residual']).rename({'Predicted': 'AT'})
 
         # combine data
         xds = xr.combine_by_coords(
