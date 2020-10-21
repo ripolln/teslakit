@@ -33,9 +33,11 @@ stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 # tk
 from .io.aux_nc import StoreBugXdset
 from .util.time_operations import npdt64todatetime as npdt2dt
+from .kma import Persistences
 from .plotting.alr import Plot_PValues, Plot_Params, Plot_Terms
-from .plotting.wts import Plot_Compare_PerpYear, Plot_Compare_Transitions
+from .plotting.wts import Plot_Compare_PerpYear, Plot_Compare_Transitions, Plot_Compare_Persistences
 from .plotting.alr import Plot_Compare_Covariate
+from .plotting.alr import Plot_Log_Sim
 
 class ALR_WRP(object):
     'AutoRegressive Logistic Model Wrapper'
@@ -75,6 +77,9 @@ class ALR_WRP(object):
         # export folders for figures
         self.p_report_fit = op.join(p_base, 'report_fit')
         self.p_report_sim = op.join(p_base, 'report_sim')
+
+        # log sim
+        self.p_log_sim_xds = op.join(p_base, 'xds_log_sim.nc')
 
     def SetFitData(self, cluster_size, xds_bmus_fit, d_terms_settings):
         '''
@@ -464,7 +469,8 @@ class ALR_WRP(object):
         f = Plot_Terms(term_mx, term_ds, term_ns, show=show)
         return f
 
-    def Simulate(self, num_sims, time_sim, xds_covars_sim=None):
+    def Simulate(self, num_sims, time_sim, xds_covars_sim=None,
+                 log_sim=False, of_probs=0.98, of_pers=5):
         '''
         Launch ARL model simulations
 
@@ -474,7 +480,112 @@ class ALR_WRP(object):
         xds_covars_sim     - xr.Dataset (time,), cov_values
             Covariates used at simulation, compatible with "n_sim" dimension
             ("n_sim" dimension (optional) will be iterated with each simulation)
+
+        log_sim            - Store a log with simulation detailed information.
+
+        of_probs           - overfit filter probabilities activation
+        of_pers            - overfit filter persistences activation
         '''
+
+        class SimLog(object):
+            '''
+            simulatiom log - records and stores detail info for each time step and n_sim
+            '''
+            def __init__(self, time_yfrac, mk_order, num_sims, cluster_size, terms_fit_names):
+
+                # initialize variables to record
+                self.terms = np.nan * np.zeros((len(time_yfrac)-mk_order,
+                                                num_sims, mk_order+1, len(terms_fit_names)))
+                self.probs = np.nan * np.zeros((len(time_yfrac)-mk_order, num_sims, mk_order+1, cluster_size))
+                self.ptrns = np.nan * np.zeros((len(time_yfrac)-mk_order, num_sims, cluster_size))
+                self.nrnd = np.nan * np.zeros((len(time_yfrac)-mk_order, num_sims))
+                self.evbmu_sims = np.nan * np.zeros((len(time_yfrac)-mk_order, num_sims))
+
+                # overfit filter variables (filter states and filtered bmus) 
+                self.of_state = np.zeros((len(time_yfrac)-mk_order, num_sims), dtype=bool)
+                self.of_bmus = np.nan * np.zeros((len(time_yfrac)-mk_order, num_sims))
+
+            def Add(self, ix_t, ix_s, terms, prob, probTrans, nrnd, of_state, of_bmus):
+
+                # add iteration to log
+                self.terms[ix_t,ix_s,:,:] = terms
+                self.probs[ix_t,ix_s,:,:] = prob
+                self.ptrns[ix_t,ix_s,:] = probTrans
+                self.nrnd[ix_t,ix_s] = nrnd
+                self.evbmu_sims[ix_t,ix_s] = np.where(probTrans>nrnd)[0][0]+1
+
+                # add overfit filter data to log
+                self.of_state[ix_t,ix_s] = of_state
+                self.of_bmus[ix_t,ix_s] = of_bmus
+
+            def Save(self, p_save, terms_names):
+
+                # use xarray to store netcdf
+                xds_log = xr.Dataset(
+                    {
+                        'alr_terms': (('time', 'n_sim', 'mk', 'terms',), self.terms),
+                        'probs': (('time', 'n_sim', 'mk', 'n_clusters'), self.probs),
+                        'probTrans': (('time', 'n_sim', 'n_clusters'), self.ptrns),
+                        'nrnd': (('time', 'n_sim'), self.nrnd),
+                        'evbmus_sims': (('time', 'n_sim'), self.evbmu_sims.astype(int)),
+
+                        'overfit_filter_state': (('time', 'n_sim'), self.of_state),
+                        'evbmus_sims_filtered': (('time', 'n_sim'), self.of_bmus.astype(int)),
+                    },
+
+                    coords = {
+                        'time' : time_sim[mk_order:],
+                        'terms' : terms_names,
+                    },
+                )
+
+                StoreBugXdset(xds_log, p_save)
+                print('simulation data log stored at {0}\n'.format(p_save))
+
+        class OverfitFilter(object):
+            '''
+            overfit filter for alr outlayer outputs.
+            '''
+            def __init__(self, probs_lim, pers_lim):
+
+                self.active = False
+                self.probs_lim = probs_lim
+                self.pers_lim = pers_lim
+                self.log = ''
+
+            def CheckStatus(self, prob, bmus):
+                'check current iteration filter status'
+
+                # active filter
+                if self.active:
+
+                    # continuation condition 
+                    self.active = np.nanmax(prob[-1, :]) >= of_probs
+
+                    # log when deactivated
+                    if self.active == False:
+                        self.log += '{0} - deactivated (max prob {1})\n'.format(
+                            time_sim[i], np.nanmax(prob[-1,:]))
+
+                # inactive filter
+                else:
+
+                    # re-activation condition
+                    self.active = np.nanmax(prob[-1, :]) >= of_probs and \
+                            np.all(evbmus[-1*of_pers:]==new_bmus)
+
+                    # log when activated
+                    if self.active:
+                        self.log += '{0} - activated (max prob {1})\n'.format(
+                            time_sim[i], np.nanmax(prob[-1,:]))
+
+            def PrintLog(self):
+                'Print filter log'
+
+                if self.log != '':
+                    print('overfit filter log')
+                    print(self.log)
+
 
         # switch library probabilities predictor function 
         if self.model_library == 'statsmodels':
@@ -513,6 +624,13 @@ class ALR_WRP(object):
         # filter usage counter
         c_fs = 0
 
+        # initialize optional simulation log 
+        if log_sim:
+            SL = SimLog(time_yfrac, mk_order, num_sims, self.cluster_size, self.terms_fit_names)
+
+        # initialize ALR overfit filter
+        ofilt = OverfitFilter(of_probs, of_pers)
+
         # start simulations
         print("\nLaunching {0} simulations...\n".format(num_sims))
         evbmus_sims = np.zeros((len(time_yfrac), num_sims))
@@ -539,7 +657,7 @@ class ALR_WRP(object):
                 desc = 'Sim. Num. {0:03d}{1}'.format(n+1, cvtxt)
             )
 
-            evbmus = evbmus_values[1:mk_order+1]
+            evbmus = evbmus_values[1:mk_order+1]  # TODO 0:mk_order ?
             for i in range(len(time_yfrac) - mk_order):
 
                 # handle simulation covars
@@ -561,7 +679,7 @@ class ALR_WRP(object):
                     d_terms_settings_sim['covariates'] = (True, xds_cov_sim_step)
 
                 # generate time step ALR terms
-                terms_i, _ = self.GenerateALRTerms(
+                terms_i, terms_names = self.GenerateALRTerms(
                     d_terms_settings_sim,
                     np.append(evbmus[ i : i + mk_order], 0),
                     time_yfrac[i : i + mk_order + 1],
@@ -571,8 +689,26 @@ class ALR_WRP(object):
                 X = np.concatenate(list(terms_i.values()), axis=1)
                 prob = pred_prob_fun(X)  # statsmodels // sklearn functions
                 probTrans = np.cumsum(prob[-1,:])
+
+                # generate random cluster with ALR probs
                 nrnd = np.random.rand()
-                evbmus = np.append(evbmus, np.where(probTrans>nrnd)[0][0]+1)
+                new_bmus = np.where(probTrans>nrnd)[0][0]+1
+
+                # overfit filter status swich
+                ofilt.CheckStatus(prob, np.append(evbmus, new_bmus))
+
+                # override overfit bmus if filter active
+                if ofilt.active:
+                    # criteria: random bmus from that date of the year at  historical
+                    ix_of = np.random.choice(np.where(
+                        self.xds_bmus_fit["time.dayofyear"] == time_sim[i].timetuple().tm_yday)[0])
+                    new_bmus = self.xds_bmus_fit.bmus.values[ix_of]
+
+                # append_bmus 
+                evbmus = np.append(evbmus, new_bmus)
+
+                # optional detail log
+                if log_sim: SL.Add(i, n, X, prob, probTrans, nrnd, ofilt.active, new_bmus)
 
                 # update progress bar 
                 pbar.update(1)
@@ -581,23 +717,12 @@ class ALR_WRP(object):
 
             # close progress bar
             pbar.close()
-
-            # TODO ?
-            # Probabilities in the nsims simulations
-            #evbmus_prob = np.zeros((evbmus_sims.shape[0], self.cluster_size))
-            #for i in range(evbmus_sims.shape[0]):
-            #    for j in range(self.cluster_size):
-            #        evbmus_prob[i, j] = len(np.argwhere(evbmus_sims[i,:]==j+1))/float(num_sims)
-
         print()  # white line after all progress bars
-
-        #evbmus_probcum = np.cumsum(evbmus_prob, axis=1)
 
         # return ALR simulation data in a xr.Dataset
         xds_out = xr.Dataset(
             {
                 'evbmus_sims': (('time', 'n_sim'), evbmus_sims.astype(int)),
-                #'evbmus_probcum': (('time', 'n_cluster'), evbmus_probcum),
             },
 
             coords = {
@@ -605,13 +730,18 @@ class ALR_WRP(object):
             },
         )
 
-
         # save output
         StoreBugXdset(xds_out, self.p_save_sim_xds)
 
+        # save log file
+        if log_sim: SL.Save(self.p_log_sim_xds, terms_names)
+
+        # overfit filter log
+        ofilt.PrintLog()
+
         return xds_out
 
-    def Report_Sim(self, py_month_ini=1, show=True):
+    def Report_Sim(self, py_month_ini=1, persistences_table=False, show=True):
         '''
         Report that Compare fitting to simulated bmus
 
@@ -633,6 +763,11 @@ class ALR_WRP(object):
         bmus_values_hist = np.reshape(xds_ALR_fit.bmus.values,[-1,1])
         bmus_dates_hist = xds_ALR_fit.time.values[:]
         num_sims = bmus_values_sim.shape[1]
+
+        # calculate bmus persistences
+        pers_hist = Persistences(bmus_values_hist.flatten())
+        lsp = [Persistences(bs) for bs in bmus_values_sim.T.astype(int)]
+        pers_sim = {k:np.concatenate([x[k] for x in lsp]) for k in lsp[0].keys()}
 
         # fix datetime 64 dates
         if isinstance(bmus_dates_sim[0], np.datetime64):
@@ -660,6 +795,27 @@ class ALR_WRP(object):
             sttl = sttl, show = show,
         )
         l_figs.append(fig_CT)
+
+
+        # Plot Persistences comparison Fit vs Sim 
+        fig_PS = Plot_Compare_Persistences(
+            cluster_size,
+            pers_hist, pers_sim,
+            show = show,
+        )
+        l_figs.append(fig_PS)
+
+        # persistences set table
+        if persistences_table:
+            print('Persistences by WT (set)')
+            for c in range(cluster_size):
+                wt=c+1
+                p_h = pers_hist[wt]
+                p_s = pers_sim[wt]
+
+                print('WT: {0}'.format(wt))
+                print('  hist : {0}'.format((sorted(set(p_h)))))
+                print('  sim. : {0}'.format(sorted(set(p_s))))
 
 
         # TODO export handling (if show=False)    
@@ -707,4 +863,23 @@ class ALR_WRP(object):
                     cn,
                     n_sim = num_sims, p_export = p_rep_cn
                 )
+
+    def Report_Sim_Log(self, n_sim=0, t_slice=None, show=True):
+        '''
+        Interactive plot for simulation log
+
+        n_sim  - simulation log to plot
+        '''
+
+        # load fit and sim bmus
+        xds_log = xr.open_dataset(self.p_log_sim_xds, decode_times=True)
+
+        # get simulation
+        log_sim = xds_log.isel(n_sim=n_sim)
+
+        if t_slice != None:
+            log_sim = log_sim.sel(time=t_slice)
+
+        # plot interactive report
+        Plot_Log_Sim(log_sim);
 
