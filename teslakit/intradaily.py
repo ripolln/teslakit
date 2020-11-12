@@ -108,12 +108,20 @@ def Calculate_Hydrographs(xds_BMUS, xds_WAVES):
                 tp_W = xds_W.Tp.values[:]
                 dir_W = xds_W.Dir.values[:]
 
-                # calculate TWL max and normalize
-                twl_temp = 0.1*(hs_W**0.5)*tp_W
+                #TODO: añadido por AlbaC
+                if 'runup' in xds_WAVES:
+                    # calculate runup max and normalize
+                    twl_temp = xds_W.runup.values[:]
+
+                else:
+                    # calculate TWL max and normalize
+                    twl_temp = 0.1*(hs_W**0.5)*tp_W
+
 
                 dt = 1.0/len(twl_temp)
                 t_norm = np.arange(dt,1+dt,dt)
 
+                # calculate TAU
                 i_twlmax = np.where(twl_temp == np.amax(twl_temp))[0]
                 twl_max_v =  twl_temp[i_twlmax][0]
                 twl_max_t =  t_norm[i_twlmax][0]
@@ -169,7 +177,7 @@ def Calculate_Hydrographs(xds_BMUS, xds_WAVES):
     return d_bins, l_mutau_xdsets
 
 
-def Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_RUNUP):
+def Calculate_Hydrographs_runup_hist(xds_BMUS, xds_WAVES, xds_RUNUP):
     '''
     Calculates intradaily hydrographs
 

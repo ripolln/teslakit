@@ -1310,7 +1310,8 @@ class Climate_Emulator(object):
 
                         mu_s = TCs_simulation.mu.values[ri]
                         ss_s = TCs_simulation.ss.values[ri]
-                        tau_s = 0.5
+                        #tau_s = 0.5
+                        tau_s = TCs_simulation.tau.values[ri]
 
                         # Get waves family data from simulated TCs (numerical+rbf)
                         mod_fam_Hs = TCs_simulation.hs.values[ri]

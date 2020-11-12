@@ -15,7 +15,7 @@ from matplotlib import path
 from .pca import PCA_EstelaPred
 from .kma import KMA_regression_guided
 from .kma import SimpleMultivariateRegressionModel as SMRM
-from .intradaily import Calculate_Hydrographs, Calculate_Hydrographs_runup
+from .intradaily import Calculate_Hydrographs, Calculate_Hydrographs_runup_hist
 
 from .plotting.estela import Plot_EOFs_EstelaPred, Plot_DWTs_Mean_Anom, \
 Plot_DWTs_Probs
@@ -267,7 +267,7 @@ class Predictor(object):
         return l_xds_MUTAU
 
 
-    def Calc_MU_TAU_Hydrographs_runup(self, xds_WAVES, xds_runup):
+    def Calc_MU_TAU_Hydrographs_runup_hist(self, xds_WAVES, xds_runup):
         '''
         Calculates TWL hydrographs
 
@@ -283,7 +283,7 @@ class Predictor(object):
         )
 
         # Calculate hydrographs for each WT
-        xds_MUTAU = Calculate_Hydrographs_runup(xds_BMUS, xds_WAVES, xds_runup)
+        xds_MUTAU = Calculate_Hydrographs_runup_hist(xds_BMUS, xds_WAVES, xds_runup)
 
         return xds_MUTAU
 

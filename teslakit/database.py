@@ -163,7 +163,7 @@ class Database(object):
             ('WAVES', ['spectra'], [op.isfile]),
             ('ESTELA', ['coastmat', 'estelamat', 'slp'],
              [op.isfile, op.isfile, op.isfile]),
-            ('TIDE', ['mareografo_nc', 'hist_astro'], [op.isfile, op.isfile]),
+            ('TIDE', ['gauge'], [op.isfile, op.isfile]),
             #('HYCREWW', ['rbf_coef'], [op.isdir]),
             #('NEARSHORE', ['swan_projects'], [op.isdir]),
         ]
@@ -427,7 +427,7 @@ class Database(object):
 
     # HYDROGRAMS
 
-    def Save_MU_TAU_hydrograms(self, l_xds, location=None):
+    def Save_MU_TAU_hydrograms(self, l_xds, location=''):
 
         p_mutau = op.join(self.paths.site.ESTELA.hydrog_mutau, location)
         if not op.isdir(p_mutau): os.makedirs(p_mutau)
@@ -436,7 +436,7 @@ class Database(object):
             n_store = 'MUTAU_WT{0:02}.nc'.format(x.WT)
             save_nc(x, op.join(p_mutau, n_store))
 
-    def Load_MU_TAU_hydrograms(self, location=None):
+    def Load_MU_TAU_hydrograms(self, location=''):
 
         p_mutau = op.join(self.paths.site.ESTELA.hydrog_mutau, location)
 
