@@ -985,6 +985,11 @@ class Climate_Emulator(object):
         xds_GEV_Par: GEV parameters
         '''
 
+
+        # TODO: AlbaC: Quitar nans del input, sino las probabilidades en la funcion empirica
+        #  no iban de 0 a 1 y por eso salian NaNs. A weibull no afecta??
+        vv = vv[~np.isnan(vv)]
+
         # optional empirical var_wt override
         fv = '{0}_{1}'.format(vn, i_wt+1)
         if fv in self.sim_icdf_empirical_override:
@@ -1300,7 +1305,12 @@ class Climate_Emulator(object):
                     # TODO: check mu 0s, set nans (?)
 
                     mu_s = all_MUs[ri]
-                    tau_s = 0.5
+
+                    # TODO AlbaC: por qué tau = 0.5?
+                    #tau_s = 0.5
+                    all_TAUs = np.concatenate(TAU_WT)
+                    tau_s = all_TAUs[ri]
+
                     ss_s = 0
 
                 else:
