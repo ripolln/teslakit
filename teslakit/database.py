@@ -761,9 +761,16 @@ class Database(object):
         xds_MJO = self.Load_MJO_sim()
         xds_DWT = self.Load_ESTELA_DWT_sim()
 
+        # DWT simulated - phase -1
+        xds_MJO = xr.Dataset(
+            {'phase': (('time',), xds_MJO.phase.isel(n_sim=n_sim) - 1)},
+            coords = {'time': xds_MJO.time.values[:]}
+        )
+
+
         # DWT simulated - evbmus_sims
         xds_DWT = xr.Dataset(
-            {'bmus': (('time',), xds_DWT.evbmus_sims.isel(n_sim=n_sim))},
+            {'bmus': (('time',), xds_DWT.evbmus_sims.isel(n_sim=n_sim) -1 )},
             coords = {'time': xds_DWT.time.values[:]}
         )
 
