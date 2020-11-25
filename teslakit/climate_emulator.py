@@ -461,7 +461,7 @@ class Climate_Emulator(object):
         )
 
         # Fit each wave family var to GEV distribution (using KMA bmus)
-        for vn in vars
+        for vn in vars_gev:
             gp_pars = FitGEV_KMA_Frechet(
                 bmus, n_clusters, xds_WVS_MS[vn].values[:])
             xds_GEV_Par[vn] = (('n_cluster', 'parameter',), gp_pars)
