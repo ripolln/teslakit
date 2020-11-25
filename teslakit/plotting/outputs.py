@@ -148,6 +148,10 @@ def axplot_compare_histograms(ax, var_1, var_2, n_bins=40,
                       density=False):
     'axes plot histogram comparison between fit-sim variables'
 
+
+    n_bins = np.linspace(np.nanmin([np.nanmin(var_1), np.nanmin(var_2)]),np.nanmax([np.nanmax(var_1), np.nanmax(var_2)]), n_bins)
+
+
     (_, bins, _) = ax.hist(var_1, n_bins, weights=np.ones(len(var_1)) / len(var_1),
             alpha=alpha_1, color=color_1, ec='k', label = label_1, density=density)
 
