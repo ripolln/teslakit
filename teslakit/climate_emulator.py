@@ -461,7 +461,7 @@ class Climate_Emulator(object):
         )
 
         # Fit each wave family var to GEV distribution (using KMA bmus)
-        for vn in vars_gev:
+        for vn in vars
             gp_pars = FitGEV_KMA_Frechet(
                 bmus, n_clusters, xds_WVS_MS[vn].values[:])
             xds_GEV_Par[vn] = (('n_cluster', 'parameter',), gp_pars)
@@ -1305,12 +1305,8 @@ class Climate_Emulator(object):
                     # TODO: check mu 0s, set nans (?)
 
                     mu_s = all_MUs[ri]
-
-                    # TODO AlbaC: por qué tau = 0.5?
                     #tau_s = 0.5
-                    all_TAUs = np.concatenate(TAU_WT)
-                    tau_s = all_TAUs[ri]
-
+                    tau_s = rand()
                     ss_s = 0
 
                 else:
@@ -1336,7 +1332,7 @@ class Climate_Emulator(object):
                         mu_s = TCs_simulation.mu.values[ri]
                         ss_s = TCs_simulation.ss.values[ri]
                         #tau_s = 0.5
-                        tau_s = TCs_simulation.tau.values[ri]
+                        tau_s = rand()
 
                         # Get waves family data from simulated TCs (numerical+rbf)
                         mod_fam_Hs = TCs_simulation.hs.values[ri]
