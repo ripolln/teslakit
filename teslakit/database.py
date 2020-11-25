@@ -545,7 +545,7 @@ class Database(object):
         MSL_h = MSL_h.drop_vars(['mmsl_median']).rename({'mmsl':'MMSL'})
         MSL_h['MMSL'] = MSL_h['MMSL'] / 1000.0  # mm to m
         DWT_h = DWT_h.rename({'bmus':'DWT'})
-        ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
+        ATD_h = ATD_h.drop_vars(['WaterLevels','Residual']).rename({'Predicted':'AT'})
 
         # combine data
         xds = xr.combine_by_coords(
