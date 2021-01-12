@@ -26,9 +26,7 @@ def Calculate_MMSL(xda_tide, year_ini, year_end):
                 drop = True)[:-2]
             time_sel = tide_sel_m.time.values
 
-            ind_nonNaN = np.where(~np.isnan(tide_sel_m))
-
-            if (len(time_sel) >= 300) and (len(ind_nonNaN[0]) >= 300):
+            if len(time_sel) >= 300:
                 # mean, median and dates
                 ts_mean = tide_sel_m.mean().values
                 ts_median = tide_sel_m.median().values

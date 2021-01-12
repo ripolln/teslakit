@@ -90,11 +90,6 @@ def Empirical_ICDF(x, p):
 
     # TODO: revisar que el fill_value funcione correctamente
 
-    # TODO: AlbaC:
-    #  He quitado los Nans del input (en ICDF_Distribution de climate_emulator),
-    #  sino las probabilidades no van de 0 a 1 y por eso salian NaNs
-    #  Creo que ahora el fill_value no es necesario
-
     # fit ECDF
     ecdf = ECDF(x)
     cdf = ecdf(x)
@@ -106,7 +101,6 @@ def Empirical_ICDF(x, p):
         #fill_value=(np.min(x), np.max(x)),
         bounds_error=False
     )
-
     return fint(p)
 
 def copulafit(u, family='gaussian'):

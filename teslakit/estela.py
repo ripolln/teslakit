@@ -15,7 +15,7 @@ from matplotlib import path
 from .pca import PCA_EstelaPred
 from .kma import KMA_regression_guided
 from .kma import SimpleMultivariateRegressionModel as SMRM
-from .intradaily import Calculate_Hydrographs, Calculate_Hydrographs_runup_hist
+from .intradaily import Calculate_Hydrographs
 
 from .plotting.estela import Plot_EOFs_EstelaPred, Plot_DWTs_Mean_Anom, \
 Plot_DWTs_Probs
@@ -224,7 +224,7 @@ class Predictor(object):
         self.Save()
 
     def Calc_KMA_regressionguided(
-        self, num_clusters, xds_waves, waves_vars, alpha, min_group_size=None, repres = 0.95):
+        self, num_clusters, xds_waves, waves_vars, alpha, min_group_size=None):
         'KMA regression guided with waves data'
 
         # we have to miss some days of data due to ESTELA
@@ -235,6 +235,7 @@ class Predictor(object):
         xds_Yregres = SMRM(self.PCA, xds_waves, waves_vars)
 
         # classification: KMA regresion guided
+        repres = 0.95
         self.KMA = KMA_regression_guided(
             self.PCA, xds_Yregres,
             num_clusters, repres, alpha, min_group_size
@@ -266,28 +267,6 @@ class Predictor(object):
 
         return l_xds_MUTAU
 
-
-    def Calc_MU_TAU_Hydrographs_runup_hist(self, xds_WAVES, xds_runup):
-        '''
-        Calculates TWL hydrographs
-
-        returns list of xarray.Dataset with TWL hydrographs MU,TAU arrays for each WT
-        '''
-
-        # TODO: SACAR DE AQUI, replantear hydrographs
-
-        # get sorted bmus from kma
-        xds_BMUS = xr.Dataset(
-            {'bmus':(('time', self.KMA.sorted_bmus.values[:]))},
-            coords = {'time': self.KMA.time.values[:]}
-        )
-
-        # Calculate hydrographs for each WT
-        xds_MUTAU = Calculate_Hydrographs_runup_hist(xds_BMUS, xds_WAVES, xds_runup)
-
-        return xds_MUTAU
-
-
     def Mod_KMA_AddStorms(self, storm_dates, storm_categories):
         '''
         Modify KMA bmus series adding storm category (6 new groups)
@@ -298,7 +277,7 @@ class Predictor(object):
         bmus_storms = np.copy(self.KMA.sorted_bmus.values[:])  # copy numpy.array
 
         for sd, sc in zip(storm_dates, storm_categories):
-            sdr = np.array(sd, dtype='datetime64[D]')  # round to day
+            sdr =  np.array(sd, dtype='datetime64[D]')  # round to day
             pos_date = np.where(kma_dates==sdr)[0]
             if pos_date:
                 bmus_storms[pos_date[0]] = n_clusters + sc

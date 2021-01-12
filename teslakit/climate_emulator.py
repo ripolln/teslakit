@@ -989,11 +989,6 @@ class Climate_Emulator(object):
         xds_GEV_Par: GEV parameters
         '''
 
-
-        # TODO: AlbaC: Quitar nans del input, sino las probabilidades en la funcion empirica
-        #  no iban de 0 a 1 y por eso salian NaNs. A weibull no afecta??
-        vv = vv[~np.isnan(vv)]
-
         # optional empirical var_wt override
         fv = '{0}_{1}'.format(vn, i_wt+1)
         if fv in self.sim_icdf_empirical_override:
@@ -1319,8 +1314,7 @@ class Climate_Emulator(object):
                     # TODO: check mu 0s, set nans (?)
 
                     mu_s = all_MUs[ri]
-                    #tau_s = 0.5
-                    tau_s = rand()
+                    tau_s = 0.5
                     ss_s = 0
 
                 else:
@@ -1345,8 +1339,7 @@ class Climate_Emulator(object):
 
                         mu_s = TCs_simulation.mu.values[ri]
                         ss_s = TCs_simulation.ss.values[ri]
-                        #tau_s = 0.5
-                        tau_s = rand()
+                        tau_s = 0.5
 
                         # Get waves family data from simulated TCs (numerical+rbf)
                         mod_fam_Hs = TCs_simulation.hs.values[ri]
@@ -1356,14 +1349,14 @@ class Climate_Emulator(object):
                         # locate index of wave family to modify
                         ixu = wvs_fams.index(mod_fam) * 3
 
-                        # replace waves: only sea family
+                        # replace waves: only sea family 
                         upd_wvs = sim_wvs[c,:] * 0
                         upd_wvs[ixu:ixu+3] = [mod_fam_Hs, mod_fam_Tp, mod_fam_Dir]
                         do_upd_wvs = True
 
                         # replace extra variables (optional)
                         if extra_vars_update:
-                            upd_extra = sim_extra[c,:] * 0 # TODO: fix weird behaviour?
+                            upd_extra = sim_extra[c,:] * 0
                             for ve_c, ve in enumerate(extra_vars_update):
                                 upd_extra[ve_c] = TCs_simulation[ve].values[ri]
 
@@ -1412,7 +1405,7 @@ class Climate_Emulator(object):
                 xds_WVS_sim_updated[vn] = (('time',), sim_extra[:,c])
 
 
-        # generated TCs
+        # generated TCs 
         xds_TCs_sim = xr.Dataset(
             {
                 'mu':  (('time',), sims_out[:,0]),

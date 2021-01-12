@@ -422,7 +422,6 @@ class ALR_WRP(object):
 
         # load model
         self.LoadModel()
-        print(self.model.mle_retvals)
 
         # get data 
         try:

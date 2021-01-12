@@ -640,8 +640,8 @@ def Plot_Category_Change(xds_categ_changeprobs, cmap='Blues', show=True):
     # customize axes
     ttl = 'Category change probabilities'
     ax.set_title(ttl, {'fontsize':10, 'fontweight':'bold'})
-    ax.set_xlabel('category  R1')
-    ax.set_ylabel('category  R2')
+    ax.set_xlabel('category')
+    ax.set_ylabel('category')
 
     ticks = np.arange(cp.shape[0]) + 0.5
     ax.set_xticks(ticks)

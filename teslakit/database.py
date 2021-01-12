@@ -163,7 +163,7 @@ class Database(object):
             ('WAVES', ['spectra'], [op.isfile]),
             ('ESTELA', ['coastmat', 'estelamat', 'slp'],
              [op.isfile, op.isfile, op.isfile]),
-            ('TIDE', ['gauge'], [op.isfile, op.isfile]),
+            ('TIDE', ['mareografo_nc', 'hist_astro'], [op.isfile, op.isfile]),
             #('HYCREWW', ['rbf_coef'], [op.isdir]),
             #('NEARSHORE', ['swan_projects'], [op.isdir]),
         ]
@@ -339,64 +339,6 @@ class Database(object):
     def Load_WAVES_partitions(self):
         return xr.open_dataset(self.paths.site.WAVES.partitions)
 
-    def Load_WAVES_partitions_CSIRO(self):
-        xds = xr.open_dataset(self.paths.site.WAVES.partitions)
-
-        # join 2 different time periods for partitions
-        for var in ['hs', 'tp', 'dir', 'spr']:
-
-            for i in range(4):
-
-                # first period
-                if var == 'dir':
-                    phs_a = xds['{variable}{part}'.format(variable='th', part=i)].dropna(dim='time')
-                    phs_a = phs_a.rename('p{variable}{part}'.format(variable=var, part=i))
-                    phs_a['time'] = phs_a['time'].dt.round('H')
-
-                elif var == 'spr':
-                    phs_a = xds['{variable}{part}'.format(variable='si', part=i)].dropna(dim='time')
-                    phs_a = phs_a.rename('p{variable}{part}'.format(variable=var, part=i))
-                    phs_a['time'] = phs_a['time'].dt.round('H')
-
-                else:
-                    phs_a = xds['{variable}{part}'.format(variable=var, part=i)].dropna(dim='time')
-                    phs_a = phs_a.rename('p{variable}{part}'.format(variable=var, part=i))
-                    phs_a['time'] = phs_a['time'].dt.round('H')
-
-                # second period
-                phs_b = xds['p{variable}{part}'.format(variable=var, part=i)].dropna(dim='time')
-                phs_b['time'] = phs_b['time'].dt.round('H')
-
-                # join both periods
-                phs_temp = xr.merge([phs_a, phs_b])
-
-                # update xds_out
-                if i == 0:
-                    if var=='hs':
-                        xds_out = phs_temp
-                    else:
-                        xds_out = xr.merge([xds_out, phs_temp])
-                else:
-                    xds_out = xr.merge([xds_out, phs_temp])
-
-
-        # add no partitions data
-        hs = xds['hs'].dropna(dim='time')
-        hs['time'] = hs['time'].dt.round('H')
-        xds_out = xr.merge([xds_out, hs])
-
-        dir = xds['dir'].dropna(dim='time')
-        dir['time'] = dir['time'].dt.round('H')
-        xds_out = xr.merge([xds_out, dir])
-
-        fp = xds['fp'].dropna(dim='time')
-        fp['time'] = fp['time'].dt.round('H')
-        fp = fp.rename('tp')
-        xds_out = xr.merge([xds_out, 1.0/fp])
-
-        return xds_out
-
-
     def Save_WAVES_hist(self, xds):
         save_nc(xds, self.paths.site.WAVES.hist)
 
@@ -427,14 +369,15 @@ class Database(object):
 
     # HYDROGRAMS
 
-    def Save_MU_TAU_hydrograms(self, l_xds, location=''):
+    def Save_MU_TAU_hydrograms(self, l_xds):
 
-        p_mutau = op.join(self.paths.site.ESTELA.hydrog_mutau, location)
+        p_mutau = self.paths.site.ESTELA.hydrog_mutau
         if not op.isdir(p_mutau): os.makedirs(p_mutau)
 
         for x in l_xds:
             n_store = 'MUTAU_WT{0:02}.nc'.format(x.WT)
             save_nc(x, op.join(p_mutau, n_store))
+
 
     def Load_MU_TAU_hydrograms(self, location=''):
 
@@ -446,6 +389,7 @@ class Database(object):
         )
         l_xds = [xr.open_dataset(x) for x in l_mutau_ncs]
         return l_xds
+
 
     # TIDE
 
@@ -500,6 +444,16 @@ class Database(object):
         xds = xr.open_dataset(self.paths.site.TIDE.sim_mmsl, decode_times=True)
         return xds
 
+    def Save_TIDE_mmsl_params(self, xds):
+        save_nc(xds, self.paths.site.TIDE.mmsl_model_params, True)
+
+    def Load_TIDE_mmsl_params(self):
+        xds = xr.open_dataset(self.paths.site.TIDE.mmsl_model_params)
+        return xds
+
+
+
+
     # COMPLETE OFFSHORE OUTPUT 
 
     def Generate_HIST_Covariates(self):
@@ -545,7 +499,10 @@ class Database(object):
         MSL_h = MSL_h.drop_vars(['mmsl_median']).rename({'mmsl':'MMSL'})
         MSL_h['MMSL'] = MSL_h['MMSL'] / 1000.0  # mm to m
         DWT_h = DWT_h.rename({'bmus':'DWT'})
-        ATD_h = ATD_h.drop_vars(['WaterLevels','Residual']).rename({'Predicted':'AT'})
+
+        # TODO: revisar esto
+        ATD_h = ATD_h.drop_vars(['WaterLevels','Residual']).rename({'Predicted': 'AT'})
+        #ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
 
         # combine data
         xds = xr.combine_by_coords(
@@ -761,16 +718,9 @@ class Database(object):
         xds_MJO = self.Load_MJO_sim()
         xds_DWT = self.Load_ESTELA_DWT_sim()
 
-        # DWT simulated - phase -1
-        xds_MJO = xr.Dataset(
-            {'phase': (('time',), xds_MJO.phase.isel(n_sim=n_sim) - 1)},
-            coords = {'time': xds_MJO.time.values[:]}
-        )
-
-
         # DWT simulated - evbmus_sims
         xds_DWT = xr.Dataset(
-            {'bmus': (('time',), xds_DWT.evbmus_sims.isel(n_sim=n_sim) -1 )},
+            {'bmus': (('time',), xds_DWT.evbmus_sims.isel(n_sim=n_sim))},
             coords = {'time': xds_DWT.time.values[:]}
         )
 
@@ -933,44 +883,6 @@ class Database(object):
         return var_lims, RBF_coeffs
 
 
-    def Load_HYCREWW_Q(self):
-        'Load RBF coefficients and hycreww sims. max and min values'
-
-        p_h = self.paths.site.HYCREWW.rbf_coef + '_Q'  # RBF_coefficients folder
-
-        # load max and min limits
-        p_max = op.join(p_h, 'Max_from_simulations.mat')
-        p_min = op.join(p_h, 'Min_from_simulations.mat')
-        vs = ['level', 'hs', 'tp', 'rslope', 'bslope', 'rwidth', 'Zb', 'cf']
-
-        smax = ReadMatfile(p_max)['maximum']
-        smin = ReadMatfile(p_min)['minimum']
-        dl = np.column_stack([smin, smax])
-
-        var_lims = {}
-        for c, vn in enumerate(vs):
-            var_lims[vn] = dl[c]
-        var_lims['hs_lo2'] = [0.005, 0.05]
-
-        # RBF coefficients (for 15 cases)
-        code = 'Coeffs_Runup_Xbeach_test'
-        n_cases = 15
-
-        RBF_coeffs = []
-        for i in range(n_cases):
-            cf = ReadMatfile(op.join(p_h, '{0}{1}.mat'.format(code,i+1)))
-
-            rbf = {
-                'constant': cf['coeffsave']['RBFConstant'],
-                'coeff': cf['coeffsave']['rbfcoeff'],
-                'nodes': cf['coeffsave']['x'],
-            }
-
-            RBF_coeffs.append(rbf)
-
-        return var_lims, RBF_coeffs
-
-
     # CLIMATE CHANGE
 
     def Load_RCP85(self):
@@ -991,6 +903,9 @@ class Database(object):
         RCP85ratioHIST_occurrence = mf['RCP85ratioHIST_occurrence']
 
         return lon, lat, RCP85ratioHIST_occurrence
+
+    def Load_SeaLevelRise(self):
+        return xr.open_dataset(self.paths.site.CLIMATE_CHANGE.slr_nc, decode_times=True)
 
 
 
