@@ -163,7 +163,7 @@ class Database(object):
             ('WAVES', ['spectra'], [op.isfile]),
             ('ESTELA', ['coastmat', 'estelamat', 'slp'],
              [op.isfile, op.isfile, op.isfile]),
-            ('TIDE', ['mareografo_nc', 'hist_astro'], [op.isfile, op.isfile]),
+            ('TIDE', ['gauge', 'hist_astro'], [op.isfile, op.isfile]),
             #('HYCREWW', ['rbf_coef'], [op.isdir]),
             #('NEARSHORE', ['swan_projects'], [op.isdir]),
         ]
@@ -298,6 +298,9 @@ class Database(object):
 
     def Save_TCs_r2_mda_params(self, xds):
         save_nc(xds, self.paths.site.TCs.mda_r2_params)
+    
+    def Save_TCs_r2_mda_Simulations_hytc(self, xds):
+        save_nc(xds, self.paths.site.TCs.mda_r2_simulations_hytc)
 
     def Load_TCs_r2_mda_params(self):
         return xr.open_dataset(self.paths.site.TCs.mda_r2_params)
@@ -307,6 +310,9 @@ class Database(object):
 
     def Load_TCs_r2_mda_Simulations(self):
         return ReadTCsSimulations(self.paths.site.TCs.mda_r2_simulations)
+
+    def Load_TCs_r2_mda_Simulations_hytc(self):
+        return xr.open_dataset(self.paths.site.TCs.mda_r2_simulations_hytc)
 
     def Save_TCs_sim_r2_rbf_output(self, xds):
         save_nc(xds, self.paths.site.TCs.sim_r2_rbf_output)
@@ -442,16 +448,6 @@ class Database(object):
         xds = xr.open_dataset(self.paths.site.TIDE.sim_mmsl, decode_times=True)
         return xds
 
-    def Save_TIDE_mmsl_params(self, xds):
-        save_nc(xds, self.paths.site.TIDE.mmsl_model_params, True)
-
-    def Load_TIDE_mmsl_params(self):
-        xds = xr.open_dataset(self.paths.site.TIDE.mmsl_model_params)
-        return xds
-
-
-
-
     # COMPLETE OFFSHORE OUTPUT 
 
     def Generate_HIST_Covariates(self):
@@ -497,10 +493,7 @@ class Database(object):
         MSL_h = MSL_h.drop_vars(['mmsl_median']).rename({'mmsl':'MMSL'})
         MSL_h['MMSL'] = MSL_h['MMSL'] / 1000.0  # mm to m
         DWT_h = DWT_h.rename({'bmus':'DWT'})
-
-        # TODO: revisar esto
-        ATD_h = ATD_h.drop_vars(['WaterLevels','Residual']).rename({'Predicted': 'AT'})
-        #ATD_h = ATD_h.drop_vars(['observed','ntr','sigma']).rename({'predicted':'AT'})
+        ATD_h = ATD_h.rename({'Predicted':'AT'})
 
         # combine data
         xds = xr.combine_by_coords(
@@ -584,6 +577,15 @@ class Database(object):
 
         nm = '{0:08d}'.format(n_sim)  # sim code
         ps_sim = op.join(ps, nm)
+
+        s =  SplitStorage(ps_sim)
+        return s.Load(vns=vns, decode_times=decode_times, use_cftime=use_cftime)
+
+    def Load_SIM_OFFSHORE_path(self, paths, n_sim, vns=[], decode_times=False, use_cftime=False):
+        #ps = paths
+
+        #nm = '{0:08d}'.format(n_sim)  # sim code
+        ps_sim = r'/media/administrador/HD/Dropbox/Guam/teslakit/data/sites/GUAM/SIMULATION/OFFSHORE/sinWindTCs/00000000'
 
         s =  SplitStorage(ps_sim)
         return s.Load(vns=vns, decode_times=decode_times, use_cftime=use_cftime)
