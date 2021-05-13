@@ -399,6 +399,83 @@ def Plot_TCs_HistoricalTracks_Category(xds_TCs_r1, cat,
     if show: plt.show()
     return fig
 
+def Plot_TCs_SimTracks_Category(xds_TCs_r1, cat,
+                                      lon1, lon2, lat1, lat2,
+                                      pnt_lon, pnt_lat, r1,
+                                      nm_lon='ylon_TC', nm_lat='ylat_TC',
+                                      show=True):
+    'Plot Historical TCs category map, requires basemap module'
+
+    try:
+        from mpl_toolkits.basemap import Basemap
+    except:
+        print('basemap module required.')
+        return
+
+    fig, ax = plt.subplots(1, figsize=[20,10])
+
+    # setup mercator map projection.
+    m = Basemap(
+        llcrnrlon = lon1, llcrnrlat = lat1,
+        urcrnrlon = lon2, urcrnrlat = lat2,
+        resolution = 'l', projection = 'cyl',
+        lat_0 = lat1, lon_0 = lon1, area_thresh=0.01
+    )
+    m.drawcoastlines()
+    m.fillcontinents(color = 'silver')
+    m.drawmapboundary(fill_color = 'lightcyan')
+    m.drawparallels(np.arange(lat1, lat2, 20), labels = [1,0,0,0])
+    m.drawmeridians(np.arange(lon1, lon2, 20), labels = [0,0,0,1])
+
+    for s in range(len(xds_TCs_r1.storm)):
+        lon = xds_TCs_r1.isel(storm = s)[nm_lon].values.tolist()
+        lon[np.where(lon<0)] = lon[np.where(lon<0)] + 360
+
+        if s==0:
+            ax.plot(
+                lon, xds_TCs_r1.isel(storm = s)[nm_lat].values.tolist(),
+                '-', color = get_storm_color(int(cat[s].values)),
+                alpha = 0.5, label = 'Enter {0}° radius'.format(r1)
+            )
+        else:
+            ax.plot(
+                lon, xds_TCs_r1.isel(storm = s)[nm_lat].values.tolist(),
+                '-', color = get_storm_color(int(cat[s].values)),
+                alpha = 0.5,
+            )
+            ax.plot(
+                lon[0], xds_TCs_r1.isel(storm = s)[nm_lat].values.tolist()[0],
+                '.', color = get_storm_color(int(cat[s].values)),
+                markersize = 10,
+            )
+
+    # plot point
+    ax.plot(
+        pnt_lon, pnt_lat, '.',
+        markersize = 15, color = 'brown',
+        label = 'STUDY SITE'
+    )
+
+    # plot circle
+    circle = Circle(
+        m(pnt_lon, pnt_lat), r1,
+        facecolor = 'grey', edgecolor = 'grey',
+        linewidth = 3, alpha = 0.5,
+        label='Radius {0}º'.format(r1)
+    )
+    ax.add_patch(circle)
+
+    # customize axes
+    ax.set_aspect(1.0)
+    ax.set_ylim(lat1,lat2)
+    ax.set_title('Historical TCs', fontsize=15)
+    ax.legend(loc=0, fontsize=14)
+    axlegend_categ(ax)
+
+    # show and return figure
+    if show: plt.show()
+    return fig
+
 
 def axplot_scatter_params(ax, x_hist, y_hist, x_sim, y_sim):
     'axes scatter plot variable1 vs variable2 historical and simulated'
