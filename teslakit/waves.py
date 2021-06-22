@@ -355,9 +355,14 @@ def Intradaily_Hydrograph(xds_wvs, xds_tcs):
         ts = [npdt64todatetime(x) for x in ts]
 
     # input data (storms TCs)
-    tau = xds_tcs.tau.values[:]  # storm max. instant (0-1)
-    mu = xds_tcs.mu.values[:]
-    ss = xds_tcs.ss.values[:]
+    try:
+        tau = xds_tcs.tau.values[:]  # storm max. instant (0-1)
+        mu = xds_tcs.mu.values[:]
+        ss = xds_tcs.ss.values[:]
+    except:
+        tau = xds_wvs.tau.values[:]  # storm max. instant (0-1)
+        mu = xds_wvs.mu.values[:]
+        ss = xds_wvs.ss.values[:]
 
     # storm durations
     s_dur_d = np.array([x.days for x in np.diff(ts)])  # days

@@ -115,7 +115,7 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
         for lon_ps, lat_ps in lonlat_s:
             geo_dist.append(GeoDistance(lat_ps, lon_ps, p_lat, p_lon))
         geo_dist = np.asarray(geo_dist)
-
+        
         # find storm inside circle and calculate parameters
         if (geo_dist < r).any():
 
@@ -144,7 +144,7 @@ def Extract_Circle(xds_TCs, p_lon, p_lat, r, d_vns):
             else:
                 # nakajo: time already in hours
                 delta_h = np.diff(
-                    time[i_storm][~np.isnan(time[i_storm])]
+                    time[i_storm][~np.isnan(lon[i_storm])]
                 ).astype(float)
 
             vel = geo_dist_ss * 111.0/delta_h  # km/h
