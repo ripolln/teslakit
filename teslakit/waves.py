@@ -237,7 +237,7 @@ def TWL(awl, ss, at, mmsl):
 
     return awl + ss + at + mmsl
 
-def Aggregate_WavesFamilies(wvs_fams, a_tp='quadratic'):
+def Aggregate_WavesFamilies(wvs_fams, agg='max_energy'):
     '''
     Aggregate Hs, Tp and Dir from waves families data
 
@@ -245,7 +245,7 @@ def Aggregate_WavesFamilies(wvs_fams, a_tp='quadratic'):
         xarray.Dataset (time,), fam1_Hs, fam1_Tp, fam1_Dir, ...
         {any number of families}
 
-    a_tp = 'quadratic' / 'max_energy', Tp aggregation formulae
+    agg = 'quadratic' / 'max_energy', Tp and DirP aggregation formulae
 
     returns Hs, Tp, Dir (numpy.array)
     '''
@@ -261,7 +261,8 @@ def Aggregate_WavesFamilies(wvs_fams, a_tp='quadratic'):
     vv_Hs = np.column_stack([wvs_fams[v].values[:] for v in vs_Hs])
     vv_Tp = np.column_stack([wvs_fams[v].values[:] for v in vs_Tp])
     vv_Dir = np.column_stack([wvs_fams[v].values[:] for v in vs_Dir])
-
+    vv_E = vv_Hs**2 * vv_Tp
+    
     # TODO: entire row nan?
     #p_rn = np.where([x.all() for x in np.isnan(vv_Hs)])[0]
     #vv_Hs = vv_Hs[~p_rn]
@@ -276,37 +277,39 @@ def Aggregate_WavesFamilies(wvs_fams, a_tp='quadratic'):
     ix_nan_data = np.where(HS==0)
 
     # Tp
-    if a_tp == 'quadratic':
+    if agg == 'quadratic':
 
-        # TP from families 
+        # TP from families 
         tmp1 = np.power(vv_Hs,2)
         tmp2 = np.divide(np.power(vv_Hs,2), np.power(vv_Tp,2))
         TP = np.sqrt(np.nansum(tmp1, axis=1) / np.nansum(tmp2, axis=1))
-
-    elif a_tp == 'max_energy':
+        
+        # Dir from families
+        tmp3 = np.arctan2(
+            np.nansum(np.power(vv_Hs,2) * vv_Tp * np.sin(vv_Dir * np.pi/180), axis=1),
+            np.nansum(np.power(vv_Hs,2) * vv_Tp * np.cos(vv_Dir * np.pi/180), axis=1)
+        )
+        tmp3[tmp3<0] = tmp3[tmp3<0] + 2*np.pi
+        DIR = tmp3 * 180/np.pi
+        
+    elif agg == 'max_energy':
 
         # Hs maximun position 
-        vv_Hs_nanzero = vv_Hs.copy()
-        vv_Hs_nanzero[np.isnan(vv_Hs)] = 0
-        p_max_hs = np.nanargmax(vv_Hs_nanzero, axis=1)
+        vv_E_nanzero = vv_E.copy()
+        vv_E_nanzero[np.isnan(vv_E)] = 0
+        p_max_E = np.nanargmax(vv_E_nanzero, axis=1)
 
-        # Tp from families (Hs max pos)
-        TP = np.array([r[i] for r,i in zip(vv_Tp, p_max_hs)])
-
+        # Tp from families (E max pos)
+        TP = np.array([r[i] for r,i in zip(vv_Tp, p_max_E)])
+        
+        # Dir from families (E max pos)
+        DIR = np.array([r[i] for r, i in zip(vv_Dir, p_max_E)])
+        
     else:
         # TODO: make it fail
         pass
 
-
-    # Dir from families
-    tmp3 = np.arctan2(
-        np.nansum(np.power(vv_Hs,2) * vv_Tp * np.sin(vv_Dir * np.pi/180), axis=1),
-        np.nansum(np.power(vv_Hs,2) * vv_Tp * np.cos(vv_Dir * np.pi/180), axis=1)
-    )
-    tmp3[tmp3<0] = tmp3[tmp3<0] + 2*np.pi
-    DIR = tmp3 * 180/np.pi
-
-    # clear nans
+    # clear nans
     HS[ix_nan_data] = np.nan
     TP[ix_nan_data] = np.nan
     DIR[ix_nan_data] = np.nan
